@@ -4,6 +4,25 @@
   <p>Graduation Status: {{ graduationStatus() }}</p>
   <button (click)="registerForClass()">Register for a Class (+3 credits)</button>
 
-  <h2>Available Courses</h2>
-  <tms-course-card [course]="sampleCourse" (enrollClicked)="handleEnroll($event)" />
+  <!-- <h2>Available Courses</h2>
+  <tms-course-card [course]="sampleCourse" (enrollClicked)="handleEnroll($event)" /> -->
+  <h2>Course Catalog</h2>
+  @if (availableCourses().length === 0) {
+    <div class="empty-state">
+      <p>No courses are available this term. Check back during registration.</p>
+    </div>
+  } @else {
+    <div class="grid">
+      @for (course of availableCourses(); track course.id) {
+        <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
+      } @empty {
+        <p>No results match your search.</p>
+      }
+    </div>
+  }
+  @if (selectedCourse(); as picked) {
+    <p class="selection-hint" role="status">
+      Last enrollment request: <strong>{{ picked.title }}</strong> ({{ picked.code }})
+    </p>
+  }
 </div>
