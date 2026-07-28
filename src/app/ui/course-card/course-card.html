@@ -1,0 +1,18 @@
+<div class="card">
+  <h3>{{ course().title }} ({{ course().code }})</h3>
+  <p>Enrolled {{ course().enrollmentCount }} of {{ course().maxCapacity }} seats</p>
+  <span class="badge" [class.closed]="course().enrollmentCount >= course().maxCapacity">
+    {{
+      course().enrollmentCount >= course().maxCapacity
+        ? 'Full'
+        : 'Accepting
+enrollments'
+    }}
+  </span>
+  <button
+    (click)="enrollClicked.emit(course())"
+    [disabled]="course().enrollmentCount >= course().maxCapacity"
+  >
+    Enroll
+  </button>
+</div>
