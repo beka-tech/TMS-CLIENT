@@ -1,5 +1,8 @@
 <div class="card">
-  <h3>{{ course().title }} ({{ course().code }})</h3>
+  <h3>
+    <a [routerLink]="['/courses', course().id]"> {{ course().title }} </a>
+    ({{ course().code }})
+  </h3>
   <p>Enrolled {{ course().enrollmentCount }} of {{ course().maxCapacity }} seats</p>
   <span class="badge" [class.closed]="course().enrollmentCount >= course().maxCapacity">
     {{
