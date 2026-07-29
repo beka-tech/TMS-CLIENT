@@ -13,6 +13,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/course-detail/course-detail').then((m) => m.CourseDetailComponent),
   },
-
+  {
+    path: 'enroll',
+    loadComponent: () =>
+      import('./features/enrollment-form/enrollment-form').then((m) => m.EnrollmentFormComponent),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
