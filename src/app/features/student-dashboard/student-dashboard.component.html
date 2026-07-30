@@ -6,7 +6,7 @@
 
   <!-- <h2>Available Courses</h2>
   <tms-course-card [course]="sampleCourse" (enrollClicked)="handleEnroll($event)" /> -->
-  <h2>Course Catalog</h2>
+  <!-- <h2>Course Catalog</h2>
   @if (availableCourses().length === 0) {
     <div class="empty-state">
       <p>No courses are available this term. Check back during registration.</p>
@@ -24,5 +24,20 @@
     <p class="selection-hint" role="status">
       Last enrollment request: <strong>{{ picked.title }}</strong> ({{ picked.code }})
     </p>
+  } -->
+
+  <h2>Course Catalog</h2>
+  @if (coursesResource.isLoading()) {
+    <div class="spinner">Fetching courses from the server...</div>
+  } @else if (coursesResource.error()) {
+    <div class="error">Could not load courses. Make sure your .NET API is running.</div>
+  } @else {
+    <div class="grid">
+      @for (course of coursesResource.value()!; track course.id) {
+        <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
+      } @empty {
+        <p>No courses are available this term.</p>
+      }
+    </div>
   }
 </div>
