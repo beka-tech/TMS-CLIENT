@@ -1,0 +1,15 @@
+@if (store.isLoading()) {
+  <p>Loading enrollments...</p>
+}
+@for (enrollment of store.entities(); track enrollment.id) {
+  <div class="enrollment-card">
+    <span>{{ enrollment.studentName }} — {{ enrollment.courseName }}</span>
+    <span class="status">{{ enrollment.status }}</span>
+    @if (enrollment.status === 'Pending') {
+      <button (click)="onApprove(enrollment.id)">Approve</button>
+    }
+  </div>
+}
+@if (store.error()) {
+  <p class="error">{{ store.error() }}</p>
+}
