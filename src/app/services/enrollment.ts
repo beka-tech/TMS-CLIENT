@@ -6,7 +6,8 @@ import { Enrollment } from '../models/enrollment.model';
 @Service()
 export class EnrollmentService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:5150/api/enrollments';
+  // private baseUrl = 'http://localhost:5150/api/enrollments';
+  private baseUrl = 'http://localhost:5150/api/courses/1/enrollments';
 
   getAll(): Observable<Enrollment[]> {
     return this.http.get<Enrollment[]>(this.baseUrl);
