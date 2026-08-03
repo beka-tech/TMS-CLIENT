@@ -1,9 +1,10 @@
+<h2>Enroll-List</h2>
 @if (store.isLoading()) {
   <p>Loading enrollments...</p>
 }
 @for (enrollment of store.entities(); track enrollment.id) {
   <div class="enrollment-card">
-    <span>{{ enrollment.studentName }} — {{ enrollment.courseName }}</span>
+    <span>{{ enrollment.studentName }} — {{ enrollment.courseTitle }}</span>
     <span class="status">{{ enrollment.status }}</span>
     @if (enrollment.status === 'Pending') {
       <button (click)="onApprove(enrollment.id)">Approve</button>
