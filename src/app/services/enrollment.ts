@@ -14,6 +14,8 @@ export class EnrollmentService {
     return this.http.get<Enrollment[]>(this.baseUrl);
   }
   approve(id: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/${id}/approve`, {});
+    return this.http.post<void>(`${this.baseUrl}/${id}/approve`, {
+      status: 'Approved',
+    });
   }
 }
