@@ -23,5 +23,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/enrollment-list/enrollment-list').then((m) => m.EnrollmentListComponent),
   },
+  {
+    path: 'InstructorDashboard',
+    loadComponent: () =>
+      import('./features/instructor-dashboard/instructor-dashboard').then(
+        (m) => m.InstructorDashboard,
+      ),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
