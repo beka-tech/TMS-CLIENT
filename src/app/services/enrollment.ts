@@ -18,4 +18,9 @@ export class EnrollmentService {
       status: 'Approved',
     });
   }
+  reject(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${id}/reject`, {
+      status: 'reject',
+    });
+  }
 }

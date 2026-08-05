@@ -1,0 +1,305 @@
+:host {
+  /* Azure / Blue design tokens */
+  --azure-50: #f0f7ff;
+  --azure-100: #e0efff;
+  --azure-200: #b9dcff;
+  --azure-300: #7cc2ff;
+  --azure-400: #36a4ff;
+  --azure-500: #0b84f3;
+  --azure-600: #0067c0;
+  --azure-700: #00549e;
+  --azure-800: #06477f;
+  --azure-900: #0a3c69;
+
+  --surface: #ffffff;
+  --surface-soft: #f7fbff;
+  --text-primary: #102a43;
+  --text-secondary: #5c7083;
+  --border: #d8e7f5;
+  --shadow: 0 14px 40px rgb(15 76 129 / 10%);
+
+  display: block;
+  color: var(--text-primary);
+  font-family: Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* Works whether the table is placed directly or inside a wrapper/card. */
+.table-container,
+.enrollment-list,
+.mat-mdc-table,
+table {
+  width: 100%;
+}
+
+.table-container,
+.enrollment-list {
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-soft) 100%);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+/* Native table + Angular Material table support */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+th,
+.mat-mdc-header-cell {
+  min-height: 52px;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--azure-700), var(--azure-500));
+  color: #ffffff;
+  border-bottom: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1.25;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+th:first-child,
+.mat-mdc-header-cell:first-child {
+  padding-left: 1.5rem;
+}
+
+th:last-child,
+.mat-mdc-header-cell:last-child {
+  padding-right: 1.5rem;
+}
+
+td,
+.mat-mdc-cell {
+  padding: 1rem 1.25rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  vertical-align: middle;
+}
+
+td:first-child,
+.mat-mdc-cell:first-child {
+  padding-left: 1.5rem;
+  font-weight: 650;
+}
+
+td:last-child,
+.mat-mdc-cell:last-child {
+  padding-right: 1.5rem;
+}
+
+tr:last-child td,
+.mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: 0;
+}
+
+tbody tr,
+.mat-mdc-row {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+tbody tr:nth-child(even),
+.mat-mdc-row:nth-child(even) {
+  background: rgb(240 247 255 / 52%);
+}
+
+tbody tr:hover,
+.mat-mdc-row:hover {
+  position: relative;
+  z-index: 1;
+  background: var(--azure-50);
+  box-shadow: inset 4px 0 0 var(--azure-500);
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  min-width: 88px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-badge::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 70%);
+}
+
+.status-badge.approved {
+  color: #087443;
+  background: #e9fbf2;
+  border-color: #a7e8c7;
+}
+
+.status-badge.pending {
+  color: #9a5b00;
+  background: #fff7df;
+  border-color: #f4d486;
+}
+
+.status-badge.rejected {
+  color: #b42318;
+  background: #fff0ee;
+  border-color: #f5b7b1;
+}
+
+/* Action buttons */
+button,
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button {
+  min-height: 38px;
+  padding: 0.55rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--azure-600), var(--azure-500));
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgb(0 103 192 / 22%);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover:not(:disabled),
+.mat-mdc-button:hover:not(:disabled),
+.mat-mdc-raised-button:hover:not(:disabled),
+.mat-mdc-unelevated-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--azure-700), var(--azure-600));
+  box-shadow: 0 9px 22px rgb(0 84 158 / 28%);
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled),
+.mat-mdc-button:active:not(:disabled),
+.mat-mdc-raised-button:active:not(:disabled),
+.mat-mdc-unelevated-button:active:not(:disabled) {
+  box-shadow: 0 3px 10px rgb(0 84 158 / 22%);
+  transform: translateY(0);
+}
+
+button:focus-visible,
+.mat-mdc-button:focus-visible,
+.mat-mdc-raised-button:focus-visible,
+.mat-mdc-unelevated-button:focus-visible {
+  outline: 3px solid var(--azure-200);
+  outline-offset: 2px;
+}
+
+button:disabled,
+.mat-mdc-button:disabled,
+.mat-mdc-raised-button:disabled,
+.mat-mdc-unelevated-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  box-shadow: none;
+}
+
+.reject {
+  margin-left: 0.5rem;
+  color: #b42318;
+  background: #ffffff;
+  border-color: #f0b5ae;
+  box-shadow: none;
+}
+
+.reject:hover:not(:disabled) {
+  color: #ffffff;
+  background: linear-gradient(135deg, #c9342c, #e5483f);
+  border-color: #c9342c;
+  box-shadow: 0 8px 18px rgb(201 52 44 / 22%);
+}
+
+/* Optional utility for action cells */
+.actions,
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Improve Angular Material paginator consistency when present. */
+.mat-mdc-paginator {
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+/* Small screens: keep the table usable with horizontal scrolling. */
+@media (max-width: 768px) {
+  .table-container,
+  .enrollment-list {
+    overflow-x: auto;
+    border-radius: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table,
+  .mat-mdc-table {
+    min-width: 760px;
+  }
+
+  th,
+  .mat-mdc-header-cell,
+  td,
+  .mat-mdc-cell {
+    padding-right: 0.9rem;
+    padding-left: 0.9rem;
+  }
+
+  th:first-child,
+  .mat-mdc-header-cell:first-child,
+  td:first-child,
+  .mat-mdc-cell:first-child {
+    padding-left: 1rem;
+  }
+
+  th:last-child,
+  .mat-mdc-header-cell:last-child,
+  td:last-child,
+  .mat-mdc-cell:last-child {
+    padding-right: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tbody tr,
+  .mat-mdc-row,
+  button,
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button {
+    transition: none;
+  }
+}
