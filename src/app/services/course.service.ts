@@ -8,9 +8,6 @@ import { Course, CourseDetail, PagedResponse } from '../models/course.model';
 // This is similar to AddSingleton<T>() in .NET's dependency injection.
 @Service()
 export class CourseService {
-  delete(id: number) {
-    throw new Error('Method not implemented.');
-  }
   // inject(HttpClient) requests Angular's HTTP client the same pattern as inject(FormBuilder)
   private http = inject(HttpClient);
   // private baseUrl = 'http://localhost:5150/api/courses';
@@ -27,5 +24,9 @@ export class CourseService {
   }
   getById(id: string) {
     return this.http.get<CourseDetail>(`${this.base}/${id}`);
+  }
+
+  delete(id: number) {
+    return this.http.delete<void>(`${this.base}/${id}`);
   }
 }
