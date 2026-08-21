@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from './guards/role.guard';
 export const routes: Routes = [
   {
     path: 'dashboard',
@@ -22,6 +23,14 @@ export const routes: Routes = [
     path: 'enroll_list',
     loadComponent: () =>
       import('./features/enrollment-list/enrollment-list').then((m) => m.EnrollmentListComponent),
+  },
+  {
+    path: 'admin/courses',
+    loadComponent: () =>
+      import('./features/admin-course-list/admin-course-list').then(
+        (m) => m.AdminCourseListComponent,
+      ),
+    canActivate: [roleGuard('Admin')],
   },
   {
     path: 'InstructorDashboard',
