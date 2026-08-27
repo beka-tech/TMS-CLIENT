@@ -1,0 +1,271 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.login-page {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  min-height: 100vh;
+  background: #f7f8f5;
+  color: #17231f;
+}
+
+.welcome-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(2.5rem, 8vw, 7rem);
+  background: #123c36;
+  color: #f5f6ed;
+}
+
+.welcome-panel::after {
+  position: absolute;
+  right: -7rem;
+  bottom: -8rem;
+  width: 24rem;
+  height: 24rem;
+  border: 1px solid rgba(229, 231, 196, 0.25);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3rem rgba(229, 231, 196, 0.05), 0 0 0 7rem rgba(229, 231, 196, 0.04);
+  content: '';
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 4.5rem;
+  border: 1px solid #d8df9e;
+  border-radius: 50%;
+  color: #d8df9e;
+  font: 700 1.2rem Georgia, serif;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  color: #9db8a6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.welcome-panel h1 {
+  max-width: 28rem;
+  margin: 0;
+  font: 400 clamp(2.7rem, 5vw, 5.2rem) Georgia, serif;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.welcome-copy {
+  max-width: 25rem;
+  margin: 2rem 0 0;
+  color: #c8d5c8;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.accent-line {
+  width: 4rem;
+  height: 3px;
+  margin: 3.5rem 0 1.25rem;
+  background: #d8df9e;
+}
+
+.panel-note {
+  margin: 0;
+  color: #d8df9e;
+  font: italic 1rem Georgia, serif;
+}
+
+.form-panel {
+  display: grid;
+  place-items: center;
+  padding: clamp(2rem, 7vw, 6rem);
+  background: #f7f8f5;
+}
+
+.form-wrap {
+  width: min(100%, 29rem);
+  animation: reveal 500ms ease-out both;
+}
+
+.form-heading h2 {
+  margin: 0;
+  color: #17231f;
+  font: 400 clamp(2.1rem, 4vw, 3rem) Georgia, serif;
+  letter-spacing: 0;
+}
+
+.form-heading > p:last-child {
+  margin: 0.8rem 0 2.7rem;
+  color: #68766d;
+  font-size: 0.95rem;
+}
+
+form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.field-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+label {
+  color: #34443b;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.visibility-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #327267;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1.05rem;
+  border: 1px solid #cfd8d0;
+  border-radius: 3px;
+  outline: none;
+  background: #fff;
+  color: #17231f;
+  font: inherit;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+input::placeholder {
+  color: #9aa69e;
+}
+
+input:focus {
+  border-color: #327267;
+  box-shadow: 0 0 0 3px rgba(50, 114, 103, 0.13);
+}
+
+input[aria-invalid='true'] {
+  border-color: #b85445;
+}
+
+.field-error {
+  color: #b85445;
+  font-size: 0.78rem;
+}
+
+.form-error {
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid #b85445;
+  background: #fff0ed;
+  color: #8d362c;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.submit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 3.35rem;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 3px;
+  background: #d47751;
+  color: #fff;
+  cursor: pointer;
+  font: 700 0.9rem inherit;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #b95f3e;
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.button-spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.secure-note {
+  margin: 2rem 0 0;
+  color: #829087;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.secure-note span {
+  margin-right: 0.35rem;
+  color: #6c9a72;
+  font-size: 0.55rem;
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 760px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-panel {
+    min-height: 17rem;
+    padding: 2.5rem 1.5rem 3rem;
+  }
+
+  .brand-mark {
+    margin-bottom: 2.7rem;
+  }
+
+  .welcome-panel h1 {
+    max-width: 24rem;
+    font-size: 3rem;
+  }
+
+  .welcome-copy,
+  .accent-line,
+  .panel-note {
+    display: none;
+  }
+
+  .form-panel {
+    align-items: start;
+    padding: 3rem 1.5rem 4rem;
+  }
+}

@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 import { roleGuard } from './guards/role.guard';
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
     path: 'dashboard',
     loadComponent: () =>
       import('./features/student-dashboard/student-dashboard.component').then(
@@ -27,7 +32,7 @@ export const routes: Routes = [
   {
     path: 'admin/courses',
     loadComponent: () =>
-      import('./features/admin-course-list/admin-course-list').then(
+      import('./features/admin-course-list/admin-course-list.component').then(
         (m) => m.AdminCourseListComponent,
       ),
     canActivate: [roleGuard('Admin')],
@@ -39,5 +44,5 @@ export const routes: Routes = [
         (m) => m.InstructorDashboard,
       ),
   },
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
