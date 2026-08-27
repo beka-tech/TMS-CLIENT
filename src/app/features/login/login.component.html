@@ -1,0 +1,94 @@
+<main class="login-page">
+  <section class="welcome-panel" aria-label="TMS introduction">
+    <div class="brand-mark" aria-hidden="true">T</div>
+    <p class="eyebrow">Training management system</p>
+    <h1>Make your next move count.</h1>
+    <p class="welcome-copy">
+      One calm place to discover courses, manage enrollment, and keep your learning journey moving.
+    </p>
+    <div class="accent-line" aria-hidden="true"></div>
+    <p class="panel-note">Learn with intention. Grow with momentum.</p>
+  </section>
+
+  <section class="form-panel">
+    <div class="form-wrap">
+      <div class="form-heading">
+        <p class="eyebrow">Welcome back</p>
+        <h2>Sign in to TMS</h2>
+        <p>Use your account details to continue.</p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="form-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+        <div class="field-group">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            [attr.aria-invalid]="
+              loginForm.controls.email.invalid && loginForm.controls.email.touched
+            "
+          />
+          @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+            <span class="field-error">Email is required.</span>
+          } @else if (
+            loginForm.controls.email.touched && loginForm.controls.email.hasError('email')
+          ) {
+            <span class="field-error">Enter a valid email address.</span>
+          }
+        </div>
+
+        <div class="field-group">
+          <div class="label-row">
+            <label for="password">Password</label>
+            <button
+              class="visibility-button"
+              type="button"
+              (click)="showPassword.update((visible) => !visible)"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            >
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            [attr.aria-invalid]="
+              loginForm.controls.password.invalid && loginForm.controls.password.touched
+            "
+          />
+          @if (
+            loginForm.controls.password.touched && loginForm.controls.password.hasError('required')
+          ) {
+            <span class="field-error">Password is required.</span>
+          } @else if (
+            loginForm.controls.password.touched && loginForm.controls.password.hasError('minlength')
+          ) {
+            <span class="field-error">Password must be at least 6 characters.</span>
+          }
+        </div>
+
+        <button class="submit-button" type="submit" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="button-spinner" aria-hidden="true"></span>
+            Signing in...
+          } @else {
+            Sign in
+            <span aria-hidden="true">&#8594;</span>
+          }
+        </button>
+      </form>
+
+      <p class="secure-note"><span aria-hidden="true">&#9679;</span> Your connection is secure</p>
+    </div>
+  </section>
+</main>

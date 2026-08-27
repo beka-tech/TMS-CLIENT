@@ -9,6 +9,7 @@ import { inject, Service, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { environment } from '../../environments/environment.development';
 
 // @Service()
 // export class LiveSync {}
@@ -20,6 +21,7 @@ export interface EnrollmentStatusEvent {
 
 @Service()
 export class LiveSyncService {
+  private baseUrl = environment.socketUrl;
   private platformId = inject(PLATFORM_ID);
   private connection: HubConnection | null = null;
   private eventsSubject = new Subject<EnrollmentStatusEvent>();
@@ -40,7 +42,7 @@ export class LiveSyncService {
 
     // Same hub URL and reconnect strategy you tested in M7 Session 3 browser DevTools
     this.connection = new HubConnectionBuilder()
-      .withUrl('/hubs/tms')
+      .withUrl(`${this.baseUrl}/hubs/tms`)
       .withAutomaticReconnect([0, 2000, 10000, 30000])
       .build();
 
