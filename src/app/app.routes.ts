@@ -3,8 +3,7 @@ import { roleGuard } from './guards/role.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/login/login.component').then((m) => m.LoginComponent),
+    loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: 'dashboard',
@@ -35,6 +34,8 @@ export const routes: Routes = [
       import('./features/grade-submission/grade-submission.component').then(
         (m) => m.GradeSubmissionComponent,
       ),
+  },
+  {
         
     path: 'admin/courses',
     loadComponent: () =>
