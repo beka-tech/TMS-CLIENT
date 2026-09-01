@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { GradePayload, GradeService } from '../../service/grade.service';
+import { GradePayload, GradeService } from '../../services/grade.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';

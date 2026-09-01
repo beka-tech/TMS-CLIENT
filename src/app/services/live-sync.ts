@@ -64,6 +64,6 @@ export class LiveSyncService {
     this.connection
       .start()
       .then(() => this.connectionState.set('connected'))
-      .catch((err) => console.error('SignalR connection error:', err));
+      .catch((err: any) => console.error('SignalR connection error:', err));
   }
 }
