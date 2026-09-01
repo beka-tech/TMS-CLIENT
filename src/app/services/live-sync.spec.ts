@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { EnrollmentService } from './enrollment';
+import { LiveSyncService } from './live-sync';
 
-describe('Enrollment', () => {
-  let service: EnrollmentService;
+describe('LiveSync', () => {
+  let service: LiveSyncService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(EnrollmentService);
+    service = TestBed.inject(LiveSyncService);
   });
 
   it('should be created', () => {
