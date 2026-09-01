@@ -24,6 +24,13 @@ export const routes: Routes = [
       import('./features/enrollment-list/enrollment-list').then((m) => m.EnrollmentListComponent),
   },
   {
+    path: 'grade-submission',
+    loadComponent: () =>
+      import('./features/grade-submission/grade-submission.component').then(
+        (m) => m.GradeSubmissionComponent,
+      ),
+  },
+  {
     path: 'InstructorDashboard',
     loadComponent: () =>
       import('./features/instructor-dashboard/instructor-dashboard').then(
