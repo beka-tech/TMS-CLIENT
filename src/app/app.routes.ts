@@ -36,6 +36,7 @@ export const routes: Routes = [
       ),
   },
   {
+        
     path: 'admin/courses',
     loadComponent: () =>
       import('./features/admin-course-list/admin-course-list.component').then(
