@@ -1,7 +1,20 @@
 <main class="content-page">
   <a class="back-link" routerLink="/courses"><span aria-hidden="true">←</span> All courses</a>
 
-  @if (course(); as course) {
+  @if (data.courseLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading course details...</span
+      >
+    </div>
+  } @else if (data.courseLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.courseLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadCourses()">
+        Retry
+      </button>
+    </div>
+  } @else if (course(); as course) {
     <header class="page-header course-heading">
       <div>
         <p class="page-kicker">{{ course.code }}</p>

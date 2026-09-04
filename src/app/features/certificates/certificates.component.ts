@@ -30,7 +30,7 @@ interface Feedback {
   styleUrl: './certificates.component.scss',
 })
 export class CertificatesComponent {
-  private readonly data = inject(TmsDataService);
+  protected readonly data = inject(TmsDataService);
 
   protected readonly searchTerm = signal('');
   protected readonly issueDialogOpen = signal(false);

@@ -18,7 +18,7 @@ interface EnrolledStudentRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseDetailComponent {
-  private readonly data = inject(TmsDataService);
+  protected readonly data = inject(TmsDataService);
 
   readonly id = input.required<string>();
 

@@ -13,13 +13,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { Student, StudentDraft } from '../../models/tms.model';
 import { TmsDataService } from '../../services/tms-data.service';
+import { TranscriptRequestComponent } from '../../ui/transcript-request/transcript-request';
 
 type StudentDialogMode = 'add' | 'edit' | 'view' | 'delete' | null;
 
 @Component({
   selector: 'tms-students',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranscriptRequestComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

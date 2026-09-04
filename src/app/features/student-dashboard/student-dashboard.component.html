@@ -15,6 +15,21 @@
     </a>
   </header>
 
+  @if (data.dashboardLoadState().loading || data.enrollmentLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading dashboard data...</span
+      >
+    </div>
+  } @else if (data.dashboardLoadState().error || data.enrollmentLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.dashboardLoadState().error ?? data.enrollmentLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadDashboardView()">
+        Retry
+      </button>
+    </div>
+  }
+
   <div class="metrics" aria-label="Training summary">
     <article class="metric-card students-card">
       <div class="metric-icon" aria-hidden="true">
@@ -101,6 +116,9 @@
           <div>
             <strong>No enrollments yet</strong>
             <p>New requests will appear here.</p>
+            <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadEnrollments()">
+              Retry
+            </button>
           </div>
         </div>
       }

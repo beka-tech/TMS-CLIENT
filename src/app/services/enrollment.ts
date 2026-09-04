@@ -1,29 +1,43 @@
-import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Enrollment } from '../models/enrollment.model';
-import { environment } from '../../environments/environment';
+import { API_ENDPOINTS, resourceUrl } from '../core/api-endpoints';
+import { EnrollmentDraft, EnrollmentRecord, GradeDraft } from '../models/tms.model';
+import { ApiClientService, ApiQuery } from './api-client.service';
 
-@Service()
+@Injectable({ providedIn: 'root' })
 export class EnrollmentService {
-  private http = inject(HttpClient);
-  // private baseUrl = 'http://localhost:5150/api/enrollments';
-  // private baseUrl = 'http://localhost:5150/api/courses/1/enrollments';
-  // private baseUrl = 'http://localhost:5150/api/v2/enrollments';
-  // private readonly base = `${environment.apiUrl2}/enrollments`;
-  private readonly base = 'http://localhost:5150/api/v2/enrollments';
+  private readonly api = inject(ApiClientService);
 
-  getAll(): Observable<Enrollment[]> {
-    return this.http.get<Enrollment[]>(this.base);
+  getAll(query: ApiQuery = {}): Observable<EnrollmentRecord[]> {
+    return this.api.getCollection<EnrollmentRecord>(API_ENDPOINTS.enrollments, { params: query });
   }
+
+  getById(id: string): Observable<EnrollmentRecord> {
+    return this.api.get<EnrollmentRecord>(resourceUrl(API_ENDPOINTS.enrollments, id));
+  }
+
+  create(enrollment: EnrollmentDraft): Observable<EnrollmentRecord> {
+    return this.api.post<EnrollmentRecord, EnrollmentDraft>(API_ENDPOINTS.enrollments, enrollment);
+  }
+
   approve(id: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/${id}/approve`, {
-      status: 'Approved',
-    });
+    return this.api.post<void, Record<string, never>>(
+      `${resourceUrl(API_ENDPOINTS.enrollments, id)}/approve`,
+      {},
+    );
   }
+
   reject(id: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/${id}/reject`, {
-      status: 'reject',
-    });
+    return this.api.post<void, Record<string, never>>(
+      `${resourceUrl(API_ENDPOINTS.enrollments, id)}/reject`,
+      {},
+    );
+  }
+
+  saveGrade(grade: GradeDraft): Observable<EnrollmentRecord> {
+    return this.api.put<EnrollmentRecord, { score: number }>(
+      `${resourceUrl(API_ENDPOINTS.enrollments, grade.enrollmentId)}/grade`,
+      { score: grade.score },
+    );
   }
 }

@@ -1,0 +1,73 @@
+<section class="transcript-card" aria-labelledby="transcript-heading">
+  <div class="transcript-heading">
+    <div>
+      <p class="page-kicker">Academic record</p>
+      <h3 id="transcript-heading">Transcript</h3>
+    </div>
+    @if (!report()) {
+      <button
+        class="btn btn-secondary btn-sm"
+        type="button"
+        [disabled]="workflow.isSubmitting()"
+        (click)="requestTranscript()"
+      >
+        {{ workflow.isSubmitting() ? 'Submitting…' : 'Request transcript' }}
+      </button>
+    }
+  </div>
+
+  @if (workflow.error()) {
+    <div class="transcript-error" role="alert">
+      <span>{{ workflow.error() }}</span>
+      @if (report()) {
+        <button type="button" (click)="workflow.retry()">Retry</button>
+      }
+    </div>
+  }
+
+  @if (report(); as report) {
+    <div class="report-status" aria-live="polite">
+      <span
+        class="status-pill"
+        [class.pending]="report.status === 'Queued' || report.status === 'Processing'"
+        [class.approved]="report.status === 'Completed'"
+        [class.rejected]="report.status === 'Failed'"
+      >
+        {{ report.status }}
+      </span>
+      <div>
+        <strong>{{ statusDescription(report.status) }}</strong>
+        <small>Report ID: {{ report.reportId }}</small>
+      </div>
+    </div>
+
+    <div class="progress-steps" aria-label="Transcript progress">
+      <span class="complete">Queued</span>
+      <i></i>
+      <span [class.complete]="report.status !== 'Queued'">Processing</span>
+      <i></i>
+      <span [class.complete]="report.status === 'Completed'">Completed</span>
+    </div>
+
+    @if (report.status === 'Completed' && report.downloadUrl) {
+      <a
+        class="btn btn-primary download-link"
+        [href]="report.downloadUrl"
+        target="_blank"
+        rel="noopener"
+      >
+        Download transcript
+      </a>
+    } @else if (report.status === 'Failed') {
+      <button class="btn btn-secondary btn-sm" type="button" (click)="workflow.retry()">
+        Retry status check
+      </button>
+    } @else {
+      <span class="checking">{{
+        workflow.isPolling() ? 'Checking for updates…' : 'Waiting for an update…'
+      }}</span>
+    }
+  } @else if (!workflow.error()) {
+    <p class="transcript-note">Generate a secure transcript report for {{ studentName() }}.</p>
+  }
+</section>

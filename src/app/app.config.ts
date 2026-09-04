@@ -7,6 +7,7 @@ import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@ang
 import { routes } from './app.routes';
 import { credentialsInterceptor } from './interceptors/credentials.interceptor';
 import { jwtInterceptor } from './interceptors/jwt.interceptor';
+import { errorInterceptor } from './interceptors/error.intercepter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
 
     provideHttpClient(
-      withInterceptors([credentialsInterceptor, jwtInterceptor]),
+      withInterceptors([credentialsInterceptor, errorInterceptor, jwtInterceptor]),
 
       withXsrfConfiguration({
         cookieName: 'XSRF-TOKEN',

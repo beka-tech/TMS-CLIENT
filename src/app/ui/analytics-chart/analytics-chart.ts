@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { Enrollment } from '../../models/enrollment.model';
+import { EnrollmentRecord } from '../../models/tms.model';
 
 @Component({
   selector: 'tms-analytics-chart',
@@ -11,5 +11,5 @@ import { Enrollment } from '../../models/enrollment.model';
 })
 export class AnalyticsChart {
   // Creates the [data] property used by the parent template
-  readonly data = input.required<readonly Enrollment[]>();
+  readonly data = input.required<readonly EnrollmentRecord[]>();
 }
