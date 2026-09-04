@@ -1,0 +1,67 @@
+:host {
+  display: block;
+}
+
+.certificate-heading {
+  align-items: flex-end;
+}
+.certificate-table {
+  min-width: 42rem;
+}
+
+.serial-number {
+  display: inline-flex;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.35rem;
+  background: var(--forest-50);
+  color: var(--forest-700);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.student-name {
+  color: var(--ink);
+}
+.certificate-table time {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.eligibility-note {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.certificate-error {
+  margin: 1rem 0 0;
+}
+
+.empty-eligible {
+  text-align: center;
+}
+.empty-eligible h3 {
+  margin: 1rem 0 0.35rem;
+  color: var(--ink);
+  font:
+    400 1.25rem Georgia,
+    serif;
+}
+.empty-eligible p {
+  max-width: 22rem;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .certificate-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .certificate-heading .search-box {
+    width: 100%;
+  }
+}

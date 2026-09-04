@@ -1,43 +1,109 @@
-<div class="dashboard">
-  <h1>Welcome, {{ studentName() }}</h1>
-  <p>Credits Earned: {{ earnedCredits() }}</p>
-  <p>Graduation Status: {{ graduationStatus() }}</p>
-  <button (click)="registerForClass()">Register for a Class (+3 credits)</button>
-
-  <!-- <h2>Available Courses</h2>
-  <tms-course-card [course]="sampleCourse" (enrollClicked)="handleEnroll($event)" /> -->
-  <!-- <h2>Course Catalog</h2>
-  @if (availableCourses().length === 0) {
-    <div class="empty-state">
-      <p>No courses are available this term. Check back during registration.</p>
+<section class="content-page dashboard-page">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Overview</p>
+      <h1>TMS Dashboard</h1>
+      <p class="page-subtitle">
+        A quick look at your training activity and latest enrollment requests.
+      </p>
     </div>
-  } @else {
-    <div class="grid">
-      @for (course of availableCourses(); track course.id) {
-        <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
+    <a class="btn btn-secondary" routerLink="/enrollments">
+      Review enrollments
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m13.17 12-4.58-4.59L10 6l6 6-6 6-1.41-1.41L13.17 12Z" />
+      </svg>
+    </a>
+  </header>
+
+  <div class="metrics" aria-label="Training summary">
+    <article class="metric-card students-card">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3ZM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"
+          />
+        </svg>
+      </div>
+      <p>Students</p>
+      <strong>{{ data.dashboardStats().students }}</strong>
+      <span>{{ data.dashboardStats().activeStudents }} active learners</span>
+    </article>
+
+    <article class="metric-card courses-card">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="m12 3-10 5 4 2v6l6 3 6-3v-6l2-1v6h2V8L12 3Zm4 11.76-4 2-4-2V11l4 2 4-2v3.76Z" />
+        </svg>
+      </div>
+      <p>Courses</p>
+      <strong>{{ data.dashboardStats().courses }}</strong>
+      <span>Across this intake</span>
+    </article>
+
+    <article class="metric-card enrolled-card">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z" />
+        </svg>
+      </div>
+      <p>Enrolled</p>
+      <strong>{{ data.dashboardStats().enrolled }}</strong>
+      <span>Approved enrollments</span>
+    </article>
+
+    <article class="metric-card pending-card">
+      <div class="metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 11h-2V7h2v6Zm0 4h-2v-2h2v2Z" />
+        </svg>
+      </div>
+      <p>Pending</p>
+      <strong>{{ data.dashboardStats().pending }}</strong>
+      <span>Waiting for review</span>
+    </article>
+  </div>
+
+  <section class="panel recent-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Recent enrollments</h2>
+        <p>The latest requests across all courses</p>
+      </div>
+      <a class="text-link" routerLink="/enrollments">View all</a>
+    </div>
+
+    <div class="recent-list">
+      @for (row of recentEnrollments(); track row.id) {
+        <article class="recent-row">
+          <div class="person-cell">
+            <span class="person-avatar">{{ initials(row.student?.name ?? 'Student') }}</span>
+            <span class="person-copy">
+              <strong>{{ row.student?.name ?? 'Unknown student' }}</strong>
+              <small>{{ row.id }}</small>
+            </span>
+          </div>
+          <div class="course-copy">
+            <strong>{{ row.course?.title ?? 'Unknown course' }}</strong>
+            <small>{{ row.course?.code ?? '—' }}</small>
+          </div>
+          <time [attr.datetime]="row.enrolledAt">{{ row.enrolledAt | date: 'd MMM, h:mm a' }}</time>
+          <span
+            class="status-pill"
+            [class.approved]="row.status === 'Approved'"
+            [class.pending]="row.status === 'Pending'"
+            [class.rejected]="row.status === 'Rejected'"
+          >
+            {{ row.status }}
+          </span>
+        </article>
       } @empty {
-        <p>No results match your search.</p>
+        <div class="empty-state">
+          <div>
+            <strong>No enrollments yet</strong>
+            <p>New requests will appear here.</p>
+          </div>
+        </div>
       }
     </div>
-  }
-  @if (selectedCourse(); as picked) {
-    <p class="selection-hint" role="status">
-      Last enrollment request: <strong>{{ picked.title }}</strong> ({{ picked.code }})
-    </p>
-  } -->
-
-  <h2>Course Catalog</h2>
-  @if (coursesResource.isLoading()) {
-    <div class="spinner">Fetching courses from the server...</div>
-  } @else if (coursesResource.error()) {
-    <div class="error">Could not load courses. Make sure your .NET API is running.</div>
-  } @else {
-    <div class="grid">
-      @for (course of coursesResource.value()!; track course.id) {
-        <tms-course-card [course]="course" (enrollClicked)="handleEnroll($event)" />
-      } @empty {
-        <p>No courses are available this term.</p>
-      }
-    </div>
-  }
-</div>
+  </section>
+</section>

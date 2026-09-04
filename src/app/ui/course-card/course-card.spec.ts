@@ -1,18 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
-import { CourseCard } from './course-card';
+import { CourseCardComponent } from './course-card';
 
-describe('CourseCard', () => {
-  let component: CourseCard;
-  let fixture: ComponentFixture<CourseCard>;
+describe('CourseCardComponent', () => {
+  let component: CourseCardComponent;
+  let fixture: ComponentFixture<CourseCardComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CourseCard],
+      imports: [CourseCardComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CourseCard);
+    fixture = TestBed.createComponent(CourseCardComponent);
+    fixture.componentRef.setInput('course', {
+      id: 1,
+      code: 'CS-401',
+      title: 'ASP.NET Core',
+      maxCapacity: 30,
+      enrollmentCount: 28,
+    });
     component = fixture.componentInstance;
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

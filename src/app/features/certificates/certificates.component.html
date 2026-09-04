@@ -1,0 +1,177 @@
+<section class="content-page certificates-page">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Credentials</p>
+      <h1>Certificates</h1>
+      <p class="page-subtitle">
+        Issue and track completion certificates for successful enrollments.
+      </p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" type="button" (click)="openIssueDialog()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z" />
+        </svg>
+        Issue certificate
+      </button>
+    </div>
+  </header>
+
+  @if (!issueDialogOpen() && feedback(); as notice) {
+    <div
+      class="feedback-banner"
+      [class.success]="notice.kind === 'success'"
+      [class.error]="notice.kind === 'error'"
+      [attr.role]="notice.kind === 'error' ? 'alert' : 'status'"
+    >
+      <span>{{ notice.message }}</span>
+      <button type="button" aria-label="Dismiss message" (click)="feedback.set(null)">×</button>
+    </div>
+  }
+
+  <section class="panel" aria-labelledby="certificate-list-title">
+    <div class="panel-heading certificate-heading">
+      <div>
+        <h2 id="certificate-list-title">Issued certificates</h2>
+        <p>{{ certificateRows().length }} credential records</p>
+      </div>
+      <label class="search-box">
+        <span class="sr-only">Search certificates</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M9.5 3a6.5 6.5 0 1 0 3.98 11.64L19.85 21 21 19.85l-6.36-6.37A6.5 6.5 0 0 0 9.5 3Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"
+          />
+        </svg>
+        <input
+          type="search"
+          placeholder="Serial, student, or course"
+          [value]="searchTerm()"
+          (input)="updateSearch($event)"
+        />
+      </label>
+    </div>
+
+    @if (filteredRows().length) {
+      <div class="table-wrap">
+        <table class="data-table certificate-table">
+          <thead>
+            <tr>
+              <th>Serial</th>
+              <th>Student</th>
+              <th>Course</th>
+              <th>Issued</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredRows(); track row.certificate.id) {
+              <tr>
+                <td>
+                  <span class="serial-number">{{ row.certificate.serial }}</span>
+                </td>
+                <td>
+                  <strong class="student-name">{{ row.studentName }}</strong>
+                </td>
+                <td>{{ row.courseTitle }}</td>
+                <td>
+                  <time [attr.datetime]="row.certificate.issuedAt">{{
+                    row.certificate.issuedAt | date: 'dd MMM yyyy'
+                  }}</time>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <div>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M17 3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H5V5h12v5h2V5a2 2 0 0 0-2-2Zm2.5 9A3.5 3.5 0 0 0 16 15.5c0 .82.29 1.57.77 2.17L16 23l3.5-2 3.5 2-.77-5.33A3.5 3.5 0 0 0 19.5 12Z"
+            /></svg
+          ><strong>No certificates found</strong>
+          <p>
+            {{ searchTerm() ? 'Try a different search.' : 'Issued certificates will appear here.' }}
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+</section>
+
+@if (issueDialogOpen()) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="closeIssueDialog()"
+    (keydown.escape)="closeIssueDialog()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="issue-certificate-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="dialog-header">
+        <div>
+          <h2 id="issue-certificate-title">Issue certificate</h2>
+          <p>Create a credential for a completed course.</p>
+        </div>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-label="Close dialog"
+          (click)="closeIssueDialog()"
+        >
+          ×
+        </button>
+      </header>
+
+      @if (eligibleEnrollments().length) {
+        <form (submit)="issueCertificate($event)">
+          <div class="dialog-body">
+            <div class="field">
+              <label for="eligible-enrollment">Eligible enrollment</label>
+              <select
+                id="eligible-enrollment"
+                [value]="selectedEnrollmentId()"
+                (change)="updateEnrollmentSelection($event)"
+              >
+                <option value="">Select a completed enrollment</option>
+                @for (enrollment of eligibleEnrollments(); track enrollment.id) {
+                  <option [value]="enrollment.id">
+                    {{ enrollment.studentName }} · {{ enrollment.courseTitle }} ·
+                    {{ enrollment.grade }}%
+                  </option>
+                }
+              </select>
+              <span class="eligibility-note"
+                >Approved enrollments with a passing grade are shown.</span
+              >
+            </div>
+            @if (feedback(); as notice) {
+              <p class="form-message error certificate-error" role="alert">{{ notice.message }}</p>
+            }
+          </div>
+          <footer class="dialog-actions">
+            <button class="btn btn-secondary" type="button" (click)="closeIssueDialog()">
+              Cancel</button
+            ><button class="btn btn-primary" type="submit">Issue certificate</button>
+          </footer>
+        </form>
+      } @else {
+        <div class="dialog-body empty-eligible">
+          <span class="status-pill pending">Nothing ready</span>
+          <h3>No eligible enrollments</h3>
+          <p>
+            A student needs an approved enrollment, a passing grade, and no existing certificate.
+          </p>
+        </div>
+        <footer class="dialog-actions">
+          <button class="btn btn-primary" type="button" (click)="closeIssueDialog()">Done</button>
+        </footer>
+      }
+    </section>
+  </div>
+}

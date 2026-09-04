@@ -1,79 +1,376 @@
-<!-- <h2>Enroll-List</h2>
-@if (store.isLoading()) {
-  <p>Loading enrollments...</p>
-}
-@for (enrollment of store.entities(); track enrollment.id) {
-  <div class="enrollment-card">
-    <span>{{ enrollment.studentName }} — {{ enrollment.courseTitle }}</span>
-    <span class="status">{{ enrollment.status }}</span>
-    @if (enrollment.status === 'Pending') {
-      <button (click)="onApprove(enrollment.id)">Approve</button>
+<section class="content-page enrollments-page">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Admissions</p>
+      <h1>Enrollments</h1>
+      <p class="page-subtitle">
+        Review requests, approve learners, and record final grades in one place.
+      </p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" type="button" (click)="openEnrollDialog()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z" />
+        </svg>
+        Enroll student
+      </button>
+    </div>
+  </header>
+
+  @if (feedback(); as notice) {
+    <div
+      class="feedback-banner"
+      [class.success]="notice.kind === 'success'"
+      [class.error]="notice.kind === 'error'"
+      role="status"
+    >
+      <span>{{ notice.message }}</span>
+      <button type="button" (click)="feedback.set(null)" aria-label="Dismiss message">×</button>
+    </div>
+  }
+
+  <div class="enrollment-summary" aria-label="Enrollment totals">
+    <button
+      type="button"
+      [class.active]="activeFilter() === 'All'"
+      (click)="activeFilter.set('All')"
+    >
+      <span>All records</span><strong>{{ count('All') }}</strong>
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter() === 'Approved'"
+      (click)="activeFilter.set('Approved')"
+    >
+      <span>Approved</span><strong>{{ count('Approved') }}</strong>
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter() === 'Pending'"
+      (click)="activeFilter.set('Pending')"
+    >
+      <span>Pending</span><strong>{{ count('Pending') }}</strong>
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter() === 'Rejected'"
+      (click)="activeFilter.set('Rejected')"
+    >
+      <span>Rejected</span><strong>{{ count('Rejected') }}</strong>
+    </button>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <label class="search-box">
+        <span class="sr-only">Search enrollments</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M9.5 3a6.5 6.5 0 1 0 3.98 11.64L19.85 21 21 19.85l-6.36-6.37A6.5 6.5 0 0 0 9.5 3Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"
+          />
+        </svg>
+        <input
+          type="search"
+          placeholder="Search student, course, or ID"
+          [value]="searchTerm()"
+          (input)="setSearch($event)"
+        />
+      </label>
+      <div class="filter-tabs" aria-label="Filter by status">
+        @for (filter of ['All', 'Pending', 'Approved', 'Rejected']; track filter) {
+          <button
+            type="button"
+            [class.active]="activeFilter() === filter"
+            (click)="activeFilter.set($any(filter))"
+          >
+            {{ filter }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (filteredRows().length) {
+      <div class="table-wrap">
+        <table class="data-table enrollment-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Course</th>
+              <th>Status</th>
+              <th>Grade</th>
+              <th class="actions-cell">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredRows(); track row.id) {
+              <tr>
+                <td>
+                  <div class="person-cell">
+                    <span class="person-avatar">{{
+                      initials(row.student?.name ?? 'Student')
+                    }}</span>
+                    <span class="person-copy"
+                      ><strong>{{ row.student?.name ?? 'Unknown student' }}</strong
+                      ><small>{{ row.id }}</small></span
+                    >
+                  </div>
+                </td>
+                <td>
+                  <span class="course-name">{{ row.course?.title ?? 'Unknown course' }}</span
+                  ><small class="course-code">{{ row.course?.code ?? '—' }}</small>
+                </td>
+                <td>
+                  <span
+                    class="status-pill"
+                    [class.approved]="row.status === 'Approved'"
+                    [class.pending]="row.status === 'Pending'"
+                    [class.rejected]="row.status === 'Rejected'"
+                    >{{ row.status }}</span
+                  >
+                </td>
+                <td>
+                  @if (row.grade !== null) {
+                    <span class="grade-value">{{ row.grade }}</span
+                    ><small class="grade-result">{{ resultLabel(row.grade) }}</small>
+                  } @else {
+                    <span class="not-graded">—</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <div class="row-actions">
+                    @if (row.status === 'Pending') {
+                      <button
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        (click)="updateStatus(row, 'Approved')"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-quiet btn-sm reject-action"
+                        (click)="updateStatus(row, 'Rejected')"
+                      >
+                        Reject
+                      </button>
+                    } @else if (row.status === 'Approved') {
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        (click)="openGradeDialog(row)"
+                      >
+                        {{ row.grade === null ? 'Add grade' : 'Edit grade' }}
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-quiet btn-sm"
+                        (click)="viewedEnrollment.set(row)"
+                      >
+                        View
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <div>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9.5 3a6.5 6.5 0 1 0 3.98 11.64L19.85 21 21 19.85l-6.36-6.37A6.5 6.5 0 0 0 9.5 3Z"
+            /></svg
+          ><strong>No matching enrollments</strong>
+          <p>Try a different search or status filter.</p>
+        </div>
+      </div>
     }
+  </section>
+</section>
+
+@if (enrollDialogOpen()) {
+  <div class="modal-backdrop" role="presentation" (keydown.escape)="closeEnrollDialog()">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="enroll-title">
+      <header class="dialog-header">
+        <div>
+          <h2 id="enroll-title">Enroll student</h2>
+          <p>Create a pending course enrollment.</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="Close" (click)="closeEnrollDialog()">
+          ✕
+        </button>
+      </header>
+      <form [formGroup]="enrollForm" (ngSubmit)="submitEnrollment()">
+        <div class="dialog-body form-grid">
+          @if (feedback()?.kind === 'error') {
+            <p class="form-message error field full" role="alert">{{ feedback()?.message }}</p>
+          }
+          <div class="field full">
+            <label for="enroll-student">Student</label>
+            <select
+              id="enroll-student"
+              formControlName="studentId"
+              [attr.aria-invalid]="
+                enrollForm.controls.studentId.touched && enrollForm.controls.studentId.invalid
+              "
+            >
+              <option [ngValue]="0" disabled>Select a student</option>
+              @for (student of data.students(); track student.id) {
+                @if (student.active) {
+                  <option [ngValue]="student.id">
+                    {{ student.name }} · {{ student.registrationNumber }}
+                  </option>
+                }
+              }
+            </select>
+            @if (enrollForm.controls.studentId.touched && enrollForm.controls.studentId.invalid) {
+              <span class="field-error">Choose a student.</span>
+            }
+          </div>
+          <div class="field full">
+            <label for="enroll-course">Course</label>
+            <select
+              id="enroll-course"
+              formControlName="courseId"
+              [attr.aria-invalid]="
+                enrollForm.controls.courseId.touched && enrollForm.controls.courseId.invalid
+              "
+            >
+              <option [ngValue]="0" disabled>Select a course</option>
+              @for (course of data.courses(); track course.id) {
+                <option [ngValue]="course.id">
+                  {{ course.code }} · {{ course.title }} ({{ data.enrollmentCount(course.id) }}/{{
+                    course.capacity
+                  }})
+                </option>
+              }
+            </select>
+            @if (enrollForm.controls.courseId.touched && enrollForm.controls.courseId.invalid) {
+              <span class="field-error">Choose a course.</span>
+            }
+          </div>
+        </div>
+        <footer class="dialog-actions">
+          <button class="btn btn-secondary" type="button" (click)="closeEnrollDialog()">
+            Cancel</button
+          ><button class="btn btn-primary" type="submit">Enroll student</button>
+        </footer>
+      </form>
+    </section>
   </div>
 }
-@if (store.error()) {
-  <p class="error">{{ store.error() }}</p>
-} -->
-<h2>Enrollment Records</h2>
 
-@if (store.isLoading()) {
-  <p>Loading enrollments...</p>
+@if (gradeEnrollment(); as row) {
+  <div class="modal-backdrop" role="presentation" (keydown.escape)="gradeEnrollment.set(null)">
+    <section class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="grade-title">
+      <header class="dialog-header">
+        <div>
+          <h2 id="grade-title">{{ row.grade === null ? 'Add grade' : 'Edit grade' }}</h2>
+          <p>Record a final course result.</p>
+        </div>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-label="Close"
+          (click)="gradeEnrollment.set(null)"
+        >
+          ✕
+        </button>
+      </header>
+      <form [formGroup]="gradeForm" (ngSubmit)="saveGrade()">
+        <div class="dialog-body">
+          <div class="grade-person">
+            <span class="person-avatar">{{ initials(row.student?.name ?? 'Student') }}</span>
+            <div>
+              <strong>{{ row.student?.name }}</strong
+              ><small>{{ row.course?.title }} · {{ row.course?.code }}</small>
+            </div>
+          </div>
+          <div class="field grade-field">
+            <label for="grade-score">Grade</label>
+            <div class="grade-input">
+              <input
+                id="grade-score"
+                type="number"
+                min="0"
+                max="100"
+                formControlName="grade"
+                (input)="setGradePreview($event)"
+                [attr.aria-invalid]="
+                  gradeForm.controls.grade.touched && gradeForm.controls.grade.invalid
+                "
+              /><span>/ 100</span>
+            </div>
+            @if (gradeForm.controls.grade.touched && gradeForm.controls.grade.invalid) {
+              <span class="field-error">Enter a grade from 0 to 100.</span>
+            }
+          </div>
+          <div class="result-preview" aria-live="polite">
+            <span>Result</span><strong>{{ resultLabel(gradePreview()) }}</strong>
+          </div>
+        </div>
+        <footer class="dialog-actions">
+          <button class="btn btn-secondary" type="button" (click)="gradeEnrollment.set(null)">
+            Cancel</button
+          ><button class="btn btn-primary" type="submit">Save grade</button>
+        </footer>
+      </form>
+    </section>
+  </div>
 }
 
-@if (store.error()) {
-  <p class="error">
-    {{ store.error() }}
-  </p>
+@if (viewedEnrollment(); as row) {
+  <div class="modal-backdrop" role="presentation" (keydown.escape)="viewedEnrollment.set(null)">
+    <section class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="record-title">
+      <header class="dialog-header">
+        <div>
+          <h2 id="record-title">Enrollment details</h2>
+          <p>{{ row.id }}</p>
+        </div>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-label="Close"
+          (click)="viewedEnrollment.set(null)"
+        >
+          ✕
+        </button>
+      </header>
+      <div class="dialog-body">
+        <dl class="detail-list">
+          <div>
+            <dt>Student</dt>
+            <dd>{{ row.student?.name }}</dd>
+          </div>
+          <div>
+            <dt>Course</dt>
+            <dd>{{ row.course?.title }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ row.status }}</dd>
+          </div>
+          <div>
+            <dt>Requested</dt>
+            <dd>{{ row.enrolledAt | date: 'd MMMM y, h:mm a' }}</dd>
+          </div>
+          <div>
+            <dt>Grade</dt>
+            <dd>
+              {{ row.grade === null ? 'Not graded' : row.grade + ' · ' + resultLabel(row.grade) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <footer class="dialog-actions">
+        <button class="btn btn-primary" type="button" (click)="viewedEnrollment.set(null)">
+          Done
+        </button>
+      </footer>
+    </section>
+  </div>
 }
-
-<table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
-  <!-- Student Name -->
-  <ng-container matColumnDef="studentName">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Student</th>
-
-    <td mat-cell *matCellDef="let row">
-      {{ row.studentName }}
-    </td>
-  </ng-container>
-
-  <!-- Course Name -->
-  <ng-container matColumnDef="courseName">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Course</th>
-
-    <td mat-cell *matCellDef="let row">
-      {{ row.courseName }}
-    </td>
-  </ng-container>
-
-  <!-- Status -->
-  <ng-container matColumnDef="status">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-
-    <td mat-cell *matCellDef="let row">
-      <span class="status-badge" [class]="row.status.toLowerCase()">
-        {{ row.status }}
-      </span>
-    </td>
-  </ng-container>
-
-  <!-- Actions -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef>Actions</th>
-
-    <td mat-cell *matCellDef="let row">
-      @if (row.status === 'Pending') {
-        <button (click)="store.approveEnrollment(row.id)">Approve</button>
-
-        <button class="reject" (click)="store.rejectEnrollment(row.id)">Reject</button>
-      }
-    </td>
-  </ng-container>
-
-  <!-- Header Row -->
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-
-  <!-- Data Rows -->
-  <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-</table>
-
-<mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons> </mat-paginator>

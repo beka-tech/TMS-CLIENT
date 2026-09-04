@@ -1,0 +1,194 @@
+:host {
+  display: block;
+}
+
+.page-header .btn svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.metric-card {
+  position: relative;
+  min-height: 10.5rem;
+  padding: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-card::after {
+  position: absolute;
+  right: -2.25rem;
+  bottom: -2.5rem;
+  width: 6rem;
+  height: 6rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  content: '';
+  opacity: 0.08;
+}
+
+.metric-icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin-bottom: 1rem;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--forest-100);
+  color: var(--forest-700);
+}
+
+.metric-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: currentColor;
+}
+
+.metric-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.metric-card > strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--ink);
+  font:
+    400 2.25rem/1.05 Georgia,
+    serif;
+}
+
+.metric-card > span {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted-light);
+  font-size: 0.66rem;
+}
+
+.courses-card .metric-icon {
+  background: #f4efdc;
+  color: #846b22;
+}
+
+.enrolled-card .metric-icon {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.pending-card .metric-icon {
+  background: var(--coral-soft);
+  color: var(--coral);
+}
+
+.text-link {
+  color: var(--forest-600);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.recent-list {
+  display: grid;
+}
+
+.recent-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.4fr) minmax(10rem, 1fr) 8rem 6.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.recent-row:last-child {
+  border-bottom: 0;
+}
+
+.course-copy strong,
+.course-copy small {
+  display: block;
+}
+
+.course-copy strong {
+  color: var(--ink);
+  font-size: 0.76rem;
+}
+
+.course-copy small,
+.recent-row time {
+  margin-top: 0.15rem;
+  color: var(--muted-light);
+  font-size: 0.67rem;
+}
+
+.recent-row .status-pill {
+  justify-self: start;
+}
+
+@media (max-width: 1080px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recent-row {
+    grid-template-columns: minmax(12rem, 1.4fr) minmax(10rem, 1fr) 6.5rem;
+  }
+
+  .recent-row time {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics {
+    gap: 0.75rem;
+  }
+
+  .metric-card {
+    min-height: 9.5rem;
+    padding: 1rem;
+  }
+
+  .recent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    padding: 1rem;
+  }
+
+  .course-copy {
+    grid-column: 1;
+    padding-left: 2.9rem;
+  }
+
+  .recent-row .status-pill {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 430px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    min-height: auto;
+  }
+}

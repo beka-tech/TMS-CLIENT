@@ -1,0 +1,251 @@
+<main
+  class="content-page"
+  [attr.inert]="addDialogOpen() ? '' : null"
+  [attr.aria-hidden]="addDialogOpen() ? 'true' : null"
+>
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Learning catalogue</p>
+      <h1>Courses</h1>
+      <p class="page-subtitle">Manage course capacity, instructors, and training content.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="openAddDialog()">
+      <span aria-hidden="true">+</span>
+      Add course
+    </button>
+  </header>
+
+  @if (feedback()) {
+    <div class="feedback-banner success" role="status">
+      <span>{{ feedback() }}</span>
+      <button type="button" aria-label="Dismiss message" (click)="feedback.set('')">×</button>
+    </div>
+  }
+
+  <section class="panel" aria-labelledby="course-list-heading">
+    <div class="toolbar course-toolbar">
+      <div>
+        <h2 id="course-list-heading">Course catalogue</h2>
+        <p>{{ courseRows().length }} of {{ data.courses().length }} courses</p>
+      </div>
+      <div class="search-field">
+        <label for="course-search">Search courses</label>
+        <div class="search-control">
+          <span aria-hidden="true">⌕</span>
+          <input
+            #searchInput
+            id="course-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Code, title, or instructor"
+            [value]="searchQuery()"
+            (input)="updateSearch($event)"
+          />
+          @if (searchQuery()) {
+            <button type="button" aria-label="Clear course search" (click)="clearSearch()">
+              ×
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Course</th>
+            <th scope="col">Students</th>
+            <th scope="col">Capacity</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of courseRows(); track row.course.id) {
+            <tr>
+              <td>
+                <a class="course-code" [routerLink]="['/courses', row.course.id]">
+                  {{ row.course.code }}
+                </a>
+              </td>
+              <td>
+                <div class="course-name">
+                  <a [routerLink]="['/courses', row.course.id]">{{ row.course.title }}</a>
+                  <span>{{ row.course.instructor }}</span>
+                </div>
+              </td>
+              <td>{{ row.students }}</td>
+              <td>
+                <div class="capacity-cell">
+                  <div
+                    class="capacity-track"
+                    role="progressbar"
+                    [attr.aria-label]="row.course.title + ' capacity'"
+                    aria-valuemin="0"
+                    [attr.aria-valuemax]="row.course.capacity"
+                    [attr.aria-valuenow]="row.students"
+                  >
+                    <span
+                      [class.near-full]="capacityPercent(row.students, row.course.capacity) >= 80"
+                      [style.width.%]="capacityPercent(row.students, row.course.capacity)"
+                    ></span>
+                  </div>
+                  <small>{{ row.students }} / {{ row.course.capacity }}</small>
+                </div>
+              </td>
+              <td class="row-action">
+                <a class="detail-link" [routerLink]="['/courses', row.course.id]">
+                  View <span aria-hidden="true">→</span>
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5">
+                <div class="empty-courses">
+                  <strong>No courses found</strong>
+                  <span>Try a different search or add a new course.</span>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+@if (addDialogOpen()) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="onBackdropClick($event)"
+    (keydown)="onModalKeydown($event)"
+  >
+    <section
+      #dialogPanel
+      class="modal course-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-course-title"
+      aria-describedby="add-course-description"
+      tabindex="-1"
+    >
+      <header class="dialog-header">
+        <div>
+          <p class="page-kicker">New catalogue entry</p>
+          <h2 id="add-course-title">Add course</h2>
+          <p id="add-course-description">Enter the core details. Assessments can be added later.</p>
+        </div>
+        <button class="icon-btn" type="button" aria-label="Close dialog" (click)="closeAddDialog()">
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="courseForm" (ngSubmit)="addCourse()" novalidate>
+        <div class="dialog-body form-grid">
+          @if (dialogError()) {
+            <p class="form-message error field full" role="alert">{{ dialogError() }}</p>
+          }
+
+          <div class="field">
+            <label for="course-code">Course code</label>
+            <input
+              #modalFocusTarget
+              id="course-code"
+              type="text"
+              formControlName="code"
+              autocomplete="off"
+              placeholder="CS-401"
+              [attr.aria-invalid]="
+                courseForm.controls.code.touched && courseForm.controls.code.invalid
+              "
+            />
+            @if (courseForm.controls.code.touched && courseForm.controls.code.invalid) {
+              <small class="field-error">Use a code such as CS-401.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="course-capacity">Capacity</label>
+            <input
+              id="course-capacity"
+              type="number"
+              formControlName="capacity"
+              min="1"
+              max="500"
+              [attr.aria-invalid]="
+                courseForm.controls.capacity.touched && courseForm.controls.capacity.invalid
+              "
+            />
+            @if (courseForm.controls.capacity.touched && courseForm.controls.capacity.invalid) {
+              <small class="field-error">Enter a capacity from 1 to 500.</small>
+            }
+          </div>
+
+          <div class="field full">
+            <label for="course-title">Course title</label>
+            <input
+              id="course-title"
+              type="text"
+              formControlName="title"
+              autocomplete="off"
+              placeholder="Modern Angular"
+              [attr.aria-invalid]="
+                courseForm.controls.title.touched && courseForm.controls.title.invalid
+              "
+            />
+            @if (courseForm.controls.title.touched && courseForm.controls.title.invalid) {
+              <small class="field-error">Enter a course title.</small>
+            }
+          </div>
+
+          <div class="field full">
+            <label for="course-instructor">Instructor</label>
+            <input
+              id="course-instructor"
+              type="text"
+              formControlName="instructor"
+              autocomplete="name"
+              placeholder="Instructor name"
+              [attr.aria-invalid]="
+                courseForm.controls.instructor.touched && courseForm.controls.instructor.invalid
+              "
+            />
+            @if (courseForm.controls.instructor.touched && courseForm.controls.instructor.invalid) {
+              <small class="field-error">Enter the instructor's name.</small>
+            }
+          </div>
+
+          <div class="field full">
+            <label for="course-description">Description</label>
+            <textarea
+              id="course-description"
+              formControlName="description"
+              rows="4"
+              placeholder="What will students learn?"
+              [attr.aria-invalid]="
+                courseForm.controls.description.touched && courseForm.controls.description.invalid
+              "
+            ></textarea>
+            <div class="field-hint">
+              @if (
+                courseForm.controls.description.touched && courseForm.controls.description.invalid
+              ) {
+                <small class="field-error">Enter 10–240 characters.</small>
+              } @else {
+                <small>{{ courseForm.controls.description.value.length }} / 240</small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <footer class="dialog-actions">
+          <button class="btn btn-secondary" type="button" (click)="closeAddDialog()">Cancel</button>
+          <button class="btn btn-primary" type="submit">Add course</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
