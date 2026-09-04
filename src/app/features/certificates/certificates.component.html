@@ -173,9 +173,16 @@
             }
           </div>
           <footer class="dialog-actions">
-            <button class="btn btn-secondary" type="button" (click)="closeIssueDialog()">
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="operationPending()"
+              (click)="closeIssueDialog()"
+            >
               Cancel</button
-            ><button class="btn btn-primary" type="submit">Issue certificate</button>
+            ><button class="btn btn-primary" type="submit" [disabled]="operationPending()">
+              {{ operationPending() ? 'Issuing...' : 'Issue certificate' }}
+            </button>
           </footer>
         </form>
       } @else {

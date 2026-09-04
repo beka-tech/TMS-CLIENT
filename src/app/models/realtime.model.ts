@@ -1,7 +1,13 @@
-import { EnrollmentRecord, EnrollmentStatus, TranscriptStatus } from './tms.model';
+import { EnrollmentStatus } from './tms.model';
 
-export interface EnrollmentCreatedEvent {
-  enrollment: EnrollmentRecord;
+export interface TranscriptReadyEvent {
+  reportId: string;
+  downloadUrl: string;
+}
+
+export interface CourseUpdateEvent {
+  courseCode: string;
+  message: string;
 }
 
 export interface EnrollmentStatusEvent {
@@ -9,13 +15,8 @@ export interface EnrollmentStatusEvent {
   status: EnrollmentStatus;
 }
 
-export interface GradeSubmittedEvent {
-  enrollmentId: string;
+export interface GradePostedEvent {
+  courseCode: string;
+  studentId: number;
   grade: number;
-}
-
-export interface TranscriptStatusEvent {
-  reportId: string;
-  status: TranscriptStatus;
-  downloadUrl?: string | null;
 }

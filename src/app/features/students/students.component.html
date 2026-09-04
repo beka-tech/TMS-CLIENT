@@ -53,7 +53,7 @@
             id="student-search"
             type="search"
             autocomplete="off"
-            placeholder="Name, registration no. or email"
+            placeholder="Name or registration number"
             [value]="searchQuery()"
             (input)="updateSearch($event)"
           />
@@ -89,7 +89,7 @@
               <td data-label="Name">
                 <span class="student-identity">
                   <strong>{{ student.name }}</strong>
-                  <span>{{ student.email }}</span>
+                  <span>{{ student.active ? 'Active learner' : 'Inactive learner' }}</span>
                 </span>
               </td>
               <td data-label="GPA">
@@ -139,7 +139,7 @@
                 <div class="empty-state student-empty-state">
                   <div>
                     <strong>No students found</strong>
-                    <p>Try a different name, registration number, or email.</p>
+                    <p>Try a different name or registration number.</p>
                     @if (searchQuery()) {
                       <button
                         class="btn btn-secondary btn-sm"
@@ -262,31 +262,6 @@
               }
             </div>
 
-            <div class="field full">
-              <label for="student-email">Email address</label>
-              <input
-                id="student-email"
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-                maxlength="120"
-                placeholder="student@tms.edu"
-                [attr.aria-invalid]="
-                  studentForm.controls.email.touched && studentForm.controls.email.invalid
-                "
-                [attr.aria-describedby]="
-                  studentForm.controls.email.touched && studentForm.controls.email.invalid
-                    ? 'student-email-error'
-                    : null
-                "
-              />
-              @if (studentForm.controls.email.touched && studentForm.controls.email.invalid) {
-                <span id="student-email-error" class="field-error"
-                  >Enter a valid email address.</span
-                >
-              }
-            </div>
-
             <div class="field">
               <label for="student-gpa">GPA</label>
               <input
@@ -329,9 +304,18 @@
           </div>
 
           <footer class="dialog-actions">
-            <button class="btn btn-secondary" type="button" (click)="closeDialog()">Cancel</button>
-            <button class="btn btn-primary" type="submit">
-              {{ mode === 'add' ? 'Add Student' : 'Save Changes' }}
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="operationPending()"
+              (click)="closeDialog()"
+            >
+              Cancel
+            </button>
+            <button class="btn btn-primary" type="submit" [disabled]="operationPending()">
+              {{
+                operationPending() ? 'Saving...' : mode === 'add' ? 'Add Student' : 'Save Changes'
+              }}
             </button>
           </footer>
         </form>
@@ -368,12 +352,6 @@
             </div>
 
             <dl class="detail-list student-details">
-              <div>
-                <dt>Email</dt>
-                <dd>
-                  <a [href]="'mailto:' + student.email">{{ student.email }}</a>
-                </dd>
-              </div>
               <div>
                 <dt>GPA</dt>
                 <dd>{{ student.gpa.toFixed(1) }} / 4.0</dd>
@@ -412,6 +390,9 @@
             <p>
               This also removes their enrollments and certificates. This action cannot be undone.
             </p>
+            @if (dialogError()) {
+              <p class="form-message error" role="alert">{{ dialogError() }}</p>
+            }
           </div>
 
           <footer class="dialog-actions">
@@ -419,12 +400,18 @@
               #modalFocusTarget
               class="btn btn-secondary"
               type="button"
+              [disabled]="operationPending()"
               (click)="closeDialog()"
             >
               Keep Student
             </button>
-            <button class="btn btn-danger" type="button" (click)="confirmDelete()">
-              Delete Student
+            <button
+              class="btn btn-danger"
+              type="button"
+              [disabled]="operationPending()"
+              (click)="confirmDelete()"
+            >
+              {{ operationPending() ? 'Deleting...' : 'Delete Student' }}
             </button>
           </footer>
         }

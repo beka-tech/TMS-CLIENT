@@ -1,14 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  Observable,
-  catchError,
-  finalize,
-  firstValueFrom,
-  map,
-  of,
-  shareReplay,
-  throwError,
-} from 'rxjs';
+import { Observable, finalize, firstValueFrom, map, shareReplay, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../core/api-endpoints';
 import { authRequestContext } from '../core/http-context';
 import {
@@ -93,29 +84,8 @@ export class AuthService {
     return this.refreshRequest$;
   }
 
-  loadCurrentUser(): Observable<AuthUser> {
-    return this.api.get<AuthUser>(API_ENDPOINTS.auth.currentUser).pipe(
-      map((user) => ({ ...user, role: normalizeUserRole(user.role) })),
-      map((user) => {
-        this.state.setCurrentUser(user);
-        return user;
-      }),
-    );
-  }
-
   logout(): void {
-    const refreshToken = this.state.refreshToken();
     this.state.clear();
-    if (!refreshToken) return;
-
-    this.api
-      .post<void, { refreshToken: string }>(
-        API_ENDPOINTS.auth.logout,
-        { refreshToken },
-        { context: authRequestContext(true) },
-      )
-      .pipe(catchError(() => of(void 0)))
-      .subscribe();
   }
 
   expireSession(): void {

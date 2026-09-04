@@ -1,11 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { API_ENDPOINTS } from '../core/api-endpoints';
+import { Observable, map } from 'rxjs';
+import { API_ENDPOINTS, resourceUrl } from '../core/api-endpoints';
 import { ApiClientService } from './api-client.service';
 
 export interface GradePayload {
-  studentId: number;
-  courseId: number;
+  enrollmentId: string | number;
   score: number;
 }
 
@@ -14,9 +13,11 @@ export class GradeService {
   private readonly api = inject(ApiClientService);
 
   postGrade(payload: GradePayload): Observable<{ id: string; success: boolean }> {
-    return this.api.post<{ id: string; success: boolean }, GradePayload>(
-      API_ENDPOINTS.grades,
-      payload,
-    );
+    return this.api
+      .patch<void, { grade: number }>(
+        `${resourceUrl(API_ENDPOINTS.enrollments, payload.enrollmentId)}/grade`,
+        { grade: payload.score },
+      )
+      .pipe(map(() => ({ id: String(payload.enrollmentId), success: true })));
   }
 }

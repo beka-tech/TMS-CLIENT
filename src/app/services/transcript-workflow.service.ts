@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { DestroyRef, Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription, switchMap, takeWhile, timer } from 'rxjs';
+import { Subscription, from, switchMap, takeWhile, timer } from 'rxjs';
 import { TranscriptReport } from '../models/tms.model';
 import { apiErrorMessage } from './global-message.service';
 import { LiveSyncService } from './live-sync';
@@ -24,13 +24,13 @@ export class TranscriptWorkflowService {
   readonly error = signal<string | null>(null);
 
   constructor() {
-    this.realtime.transcriptStatusUpdated$
+    this.realtime.transcriptReady$
       .pipe(takeUntilDestroyed())
-      .subscribe(({ reportId, status, downloadUrl }) => {
+      .subscribe(({ reportId, downloadUrl }) => {
         const current = this.reportState();
         if (!current || current.reportId !== reportId) return;
-        this.setReport({ ...current, status, downloadUrl: downloadUrl ?? current.downloadUrl });
-        if (status === 'Completed' || status === 'Failed') this.stopPolling();
+        this.setReport({ ...current, status: 'Completed', downloadUrl });
+        this.stopPolling();
       });
 
     const restored = this.reportState();
@@ -43,8 +43,8 @@ export class TranscriptWorkflowService {
     if (this.isSubmitting()) return;
     this.error.set(null);
     this.isSubmitting.set(true);
-    this.api
-      .request(studentId)
+    from(this.realtime.connectForStudent(studentId))
+      .pipe(switchMap(() => this.api.request(studentId)))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (report) => {
@@ -79,7 +79,7 @@ export class TranscriptWorkflowService {
   private startPolling(reportId: string): void {
     this.stopPolling();
     this.isPolling.set(true);
-    this.pollSubscription = timer(0, 2500)
+    this.pollSubscription = timer(0, 5000)
       .pipe(
         switchMap(() => this.api.getStatus(reportId)),
         takeWhile((report) => report.status === 'Queued' || report.status === 'Processing', true),

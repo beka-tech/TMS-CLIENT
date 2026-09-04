@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_ENDPOINTS, resourceUrl } from '../core/api-endpoints';
-import { EnrollmentDraft, EnrollmentRecord, GradeDraft } from '../models/tms.model';
+import { EnrollmentRecord, EnrollmentStatus, GradeDraft } from '../models/tms.model';
 import { ApiClientService, ApiQuery } from './api-client.service';
 
 @Injectable({ providedIn: 'root' })
@@ -9,15 +9,15 @@ export class EnrollmentService {
   private readonly api = inject(ApiClientService);
 
   getAll(query: ApiQuery = {}): Observable<EnrollmentRecord[]> {
-    return this.api.getCollection<EnrollmentRecord>(API_ENDPOINTS.enrollments, { params: query });
+    return this.api
+      .getCollection<EnrollmentApiModel>(API_ENDPOINTS.enrollments, { params: query })
+      .pipe(map((enrollments) => enrollments.map((enrollment) => this.normalize(enrollment))));
   }
 
-  getById(id: string): Observable<EnrollmentRecord> {
-    return this.api.get<EnrollmentRecord>(resourceUrl(API_ENDPOINTS.enrollments, id));
-  }
-
-  create(enrollment: EnrollmentDraft): Observable<EnrollmentRecord> {
-    return this.api.post<EnrollmentRecord, EnrollmentDraft>(API_ENDPOINTS.enrollments, enrollment);
+  create(enrollment: EnrollmentCreateRequest): Observable<EnrollmentRecord> {
+    return this.api
+      .post<EnrollmentApiModel, EnrollmentCreateRequest>(API_ENDPOINTS.enrollments, enrollment)
+      .pipe(map((created) => this.normalize(created)));
   }
 
   approve(id: string): Observable<void> {
@@ -34,10 +34,35 @@ export class EnrollmentService {
     );
   }
 
-  saveGrade(grade: GradeDraft): Observable<EnrollmentRecord> {
-    return this.api.put<EnrollmentRecord, { score: number }>(
+  saveGrade(grade: GradeDraft): Observable<void> {
+    return this.api.patch<void, { grade: number }>(
       `${resourceUrl(API_ENDPOINTS.enrollments, grade.enrollmentId)}/grade`,
-      { score: grade.score },
+      { grade: grade.score },
     );
   }
+
+  private normalize(enrollment: EnrollmentApiModel): EnrollmentRecord {
+    return {
+      id: String(enrollment.id),
+      studentId: enrollment.studentId,
+      courseId: enrollment.courseId,
+      status: enrollment.status as EnrollmentStatus,
+      grade: enrollment.grade ?? null,
+      enrolledAt: enrollment.enrolledAt,
+    };
+  }
+}
+
+export interface EnrollmentCreateRequest {
+  studentId: number;
+  courseCode: string;
+}
+
+interface EnrollmentApiModel {
+  id: string | number;
+  studentId: number;
+  courseId: number;
+  status: string;
+  grade?: number | null;
+  enrolledAt: string;
 }

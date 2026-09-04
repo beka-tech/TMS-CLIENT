@@ -7,9 +7,10 @@ import { ApiCollectionResponse, PagedResponse } from '../models/api.model';
 type QueryValue = string | number | boolean | readonly (string | number | boolean)[];
 export type ApiQuery = Record<string, QueryValue | null | undefined>;
 
-interface RequestOptions {
+export interface RequestOptions {
   params?: ApiQuery;
   context?: HttpContext;
+  headers?: Record<string, string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -65,11 +66,16 @@ export class ApiClientService {
     return `${this.baseUrl}${normalizedPath}`;
   }
 
-  private options(options: RequestOptions): { params?: HttpParams; context?: HttpContext } {
+  private options(options: RequestOptions): {
+    params?: HttpParams;
+    context?: HttpContext;
+    headers?: Record<string, string>;
+  } {
     const params = options.params ? this.httpParams(options.params) : undefined;
     return {
       ...(params ? { params } : {}),
       ...(options.context ? { context: options.context } : {}),
+      ...(options.headers ? { headers: options.headers } : {}),
     };
   }
 

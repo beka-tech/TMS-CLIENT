@@ -11,8 +11,10 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { CourseDraft } from '../../models/tms.model';
+import { apiErrorMessage } from '../../services/global-message.service';
 import { TmsDataService } from '../../services/tms-data.service';
 
 @Component({
@@ -32,6 +34,7 @@ export class CoursesComponent {
   protected readonly addDialogOpen = signal(false);
   protected readonly dialogError = signal('');
   protected readonly feedback = signal('');
+  protected readonly operationPending = signal(false);
 
   protected readonly courseRows = computed(() => {
     const query = this.searchQuery().trim().toLocaleLowerCase();
@@ -43,10 +46,7 @@ export class CoursesComponent {
           return true;
         }
 
-        return [course.code, course.title, course.instructor, course.description]
-          .join(' ')
-          .toLocaleLowerCase()
-          .includes(query);
+        return [course.code, course.title].join(' ').toLocaleLowerCase().includes(query);
       })
       .map((course) => ({
         course,
@@ -57,16 +57,10 @@ export class CoursesComponent {
   protected readonly courseForm = this.formBuilder.nonNullable.group({
     code: [
       '',
-      [
-        Validators.required,
-        Validators.maxLength(16),
-        Validators.pattern(/^[A-Za-z]{2,8}-[A-Za-z0-9]{2,8}$/),
-      ],
+      [Validators.required, Validators.maxLength(7), Validators.pattern(/^[A-Za-z]{3}-\d{3}$/)],
     ],
     title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-    instructor: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    capacity: [25, [Validators.required, Validators.min(1), Validators.max(500)]],
-    description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(240)]],
+    capacity: [25, [Validators.required, Validators.min(1), Validators.max(200)]],
   });
 
   private readonly dialogPanel = viewChild<ElementRef<HTMLElement>>('dialogPanel');
@@ -99,9 +93,7 @@ export class CoursesComponent {
     this.courseForm.reset({
       code: '',
       title: '',
-      instructor: '',
       capacity: 25,
-      description: '',
     });
     this.addDialogOpen.set(true);
   }
@@ -134,9 +126,7 @@ export class CoursesComponent {
     const draft: CourseDraft = {
       code: value.code.trim().toUpperCase(),
       title: value.title.trim(),
-      instructor: value.instructor.trim(),
       capacity: Number(value.capacity),
-      description: value.description.trim(),
     };
 
     const duplicate = this.data
@@ -147,9 +137,17 @@ export class CoursesComponent {
       return;
     }
 
-    const created = this.data.addCourse(draft);
-    this.feedback.set(`${created.code} · ${created.title} was added.`);
-    this.closeAddDialog();
+    this.operationPending.set(true);
+    this.data
+      .addCourse(draft)
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: (created) => {
+          this.feedback.set(`${created.code} · ${created.title} was added.`);
+          this.closeAddDialog();
+        },
+        error: (error: unknown) => this.dialogError.set(apiErrorMessage(error)),
+      });
   }
 
   protected capacityPercent(students: number, capacity: number): number {

@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 
 import { CertificateRecord } from '../../models/tms.model';
+import { apiErrorMessage } from '../../services/global-message.service';
 import { TmsDataService } from '../../services/tms-data.service';
 
 interface CertificateRow {
@@ -36,6 +38,7 @@ export class CertificatesComponent {
   protected readonly issueDialogOpen = signal(false);
   protected readonly selectedEnrollmentId = signal('');
   protected readonly feedback = signal<Feedback | null>(null);
+  protected readonly operationPending = signal(false);
 
   protected readonly certificateRows = computed<CertificateRow[]>(() =>
     [...this.data.certificates()]
@@ -70,7 +73,7 @@ export class CertificatesComponent {
       .enrollments()
       .filter(
         (enrollment) =>
-          enrollment.status === 'Approved' &&
+          (enrollment.status === 'Approved' || enrollment.status === 'Completed') &&
           enrollment.grade !== null &&
           enrollment.grade >= 50 &&
           !issuedPairs.has(`${enrollment.studentId}:${enrollment.courseId}`),
@@ -115,12 +118,18 @@ export class CertificatesComponent {
       return;
     }
 
-    const result = this.data.issueCertificate(enrollmentId);
-    this.feedback.set({ kind: result.ok ? 'success' : 'error', message: result.message });
-
-    if (result.ok) {
-      this.issueDialogOpen.set(false);
-      this.selectedEnrollmentId.set('');
-    }
+    this.operationPending.set(true);
+    this.data
+      .issueCertificate(enrollmentId)
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: () => {
+          this.feedback.set({ kind: 'success', message: 'Certificate issued successfully.' });
+          this.issueDialogOpen.set(false);
+          this.selectedEnrollmentId.set('');
+        },
+        error: (error: unknown) =>
+          this.feedback.set({ kind: 'error', message: apiErrorMessage(error) }),
+      });
   }
 }

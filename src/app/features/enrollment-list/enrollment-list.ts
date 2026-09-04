@@ -1,12 +1,14 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import {
   EnrollmentRecord,
   EnrollmentStatus,
   Student,
   TrainingCourse,
 } from '../../models/tms.model';
+import { apiErrorMessage } from '../../services/global-message.service';
 import { TmsDataService } from '../../services/tms-data.service';
 
 type EnrollmentFilter = 'All' | EnrollmentStatus;
@@ -34,6 +36,7 @@ export class EnrollmentListComponent {
   protected readonly viewedEnrollment = signal<EnrollmentRow | null>(null);
   protected readonly gradePreview = signal(0);
   protected readonly feedback = signal<{ kind: 'success' | 'error'; message: string } | null>(null);
+  protected readonly operationPending = signal(false);
 
   protected readonly enrollForm = this.formBuilder.nonNullable.group({
     studentId: [0, [Validators.required, Validators.min(1)]],
@@ -92,22 +95,39 @@ export class EnrollmentListComponent {
       this.enrollForm.markAllAsTouched();
       return;
     }
-    const result = this.data.addEnrollment(this.enrollForm.getRawValue());
-    if (!result.ok) {
-      this.feedback.set({ kind: 'error', message: result.message });
-      return;
-    }
-    this.enrollDialogOpen.set(false);
-    this.feedback.set({ kind: 'success', message: result.message });
-    this.activeFilter.set('All');
+    this.feedback.set(null);
+    this.operationPending.set(true);
+    this.data
+      .addEnrollment(this.enrollForm.getRawValue())
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: () => {
+          this.enrollDialogOpen.set(false);
+          this.feedback.set({
+            kind: 'success',
+            message: 'Enrollment added and marked as pending.',
+          });
+          this.activeFilter.set('All');
+        },
+        error: (error: unknown) =>
+          this.feedback.set({ kind: 'error', message: apiErrorMessage(error) }),
+      });
   }
 
   protected updateStatus(row: EnrollmentRow, status: EnrollmentStatus): void {
-    this.data.setEnrollmentStatus(row.id, status);
-    this.feedback.set({
-      kind: 'success',
-      message: `${row.student?.name ?? 'Enrollment'} was ${status.toLowerCase()}.`,
-    });
+    this.operationPending.set(true);
+    this.data
+      .setEnrollmentStatus(row.id, status)
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: () =>
+          this.feedback.set({
+            kind: 'success',
+            message: `${row.student?.name ?? 'Enrollment'} was ${status.toLowerCase()}.`,
+          }),
+        error: (error: unknown) =>
+          this.feedback.set({ kind: 'error', message: apiErrorMessage(error) }),
+      });
   }
 
   protected openGradeDialog(row: EnrollmentRow): void {
@@ -127,12 +147,21 @@ export class EnrollmentListComponent {
       this.gradeForm.markAllAsTouched();
       return;
     }
-    this.data.setGrade(row.id, this.gradeForm.getRawValue().grade);
-    this.gradeEnrollment.set(null);
-    this.feedback.set({
-      kind: 'success',
-      message: `Grade saved for ${row.student?.name ?? 'student'}.`,
-    });
+    this.operationPending.set(true);
+    this.data
+      .setGrade(row.id, this.gradeForm.getRawValue().grade)
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: () => {
+          this.gradeEnrollment.set(null);
+          this.feedback.set({
+            kind: 'success',
+            message: `Grade saved for ${row.student?.name ?? 'student'}.`,
+          });
+        },
+        error: (error: unknown) =>
+          this.feedback.set({ kind: 'error', message: apiErrorMessage(error) }),
+      });
   }
 
   protected resultLabel(grade: number | null): string {
