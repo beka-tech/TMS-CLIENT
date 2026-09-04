@@ -1,47 +1,35 @@
-import { rxResource } from '@angular/core/rxjs-interop';
-import { CourseService } from '../../services/course.service';
-import { Component, signal, computed, inject } from '@angular/core';
-import { CourseCardComponent } from '../../ui/course-card/course-card';
-import { Course } from '../../models/course.model';
+import { Component, computed, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { TmsDataService } from '../../services/tms-data.service';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-
-  imports: [CourseCardComponent],
+  imports: [DatePipe, RouterLink],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.scss',
 })
 export class StudentDashboardComponent {
-  private api = inject(CourseService);
+  protected readonly data = inject(TmsDataService);
 
-  studentName = signal('Liya Kebede');
-  earnedCredits = signal(45);
-
-  graduationStatus = computed(() =>
-    this.earnedCredits() >= 120 ? 'Eligible for Graduation' : 'In Progress',
+  protected readonly recentEnrollments = computed(() =>
+    [...this.data.enrollments()]
+      .sort((a, b) => Date.parse(b.enrolledAt) - Date.parse(a.enrolledAt))
+      .slice(0, 5)
+      .map((enrollment) => ({
+        ...enrollment,
+        student: this.data.studentById(enrollment.studentId),
+        course: this.data.courseById(enrollment.courseId),
+      })),
   );
 
-  selectedCourse = signal<Course | null>(null);
-
-  sampleCourse: Course = {
-    id: 1,
-    title: 'Advanced Java Services',
-    code: 'CSE-101',
-    maxCapacity: 30,
-    enrollmentCount: 12,
-  };
-
-  coursesResource = rxResource({
-    stream: () => this.api.getAll(),
-  });
-
-  registerForClass() {
-    this.earnedCredits.update((c) => c + 3);
-  }
-
-  handleEnroll(course: Course) {
-    this.selectedCourse.set(course);
-    console.log('Enrollment requested for:', course.title);
+  protected initials(name: string): string {
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase();
   }
 }

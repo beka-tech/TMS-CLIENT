@@ -12,7 +12,9 @@ describe('AnalyticsChart', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(AnalyticsChart);
+    fixture.componentRef.setInput('data', []);
     component = fixture.componentInstance;
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

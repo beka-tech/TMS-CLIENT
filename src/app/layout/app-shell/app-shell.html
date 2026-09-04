@@ -1,0 +1,137 @@
+<div class="workspace-shell" [class.nav-open]="menuOpen()">
+  <aside class="sidebar" aria-label="Primary navigation">
+    <a class="brand" routerLink="/dashboard" (click)="closeMenu()" aria-label="TMS dashboard">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span>
+        <strong>TMS</strong>
+        <small>Training management</small>
+      </span>
+    </a>
+
+    <nav class="primary-nav">
+      <p class="nav-label">Workspace</p>
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z" />
+        </svg>
+        Dashboard
+      </a>
+      <a
+        routerLink="/students"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3ZM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"
+          />
+        </svg>
+        Students
+      </a>
+      <a
+        routerLink="/courses"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="m12 3-10 5 4 2v6l6 3 6-3v-6l2-1v6h2V8L12 3Zm5.82 5L12 10.91 6.18 8 12 5.09 17.82 8ZM16 14.76l-4 2-4-2V11l4 2 4-2v3.76Z"
+          />
+        </svg>
+        Courses
+      </a>
+      <a
+        routerLink="/enrollments"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v16h18V5a2 2 0 0 0-2-2Zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm-1 14H7v-2h4v2Zm6-4H7v-2h10v2Zm0-4H7V7h10v2Z"
+          />
+        </svg>
+        Enrollments
+      </a>
+      <a
+        routerLink="/certificates"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M17 3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H5V5h12v5h2V5a2 2 0 0 0-2-2Zm-6 4H7v2h4V7Zm4 4H7v2h8v-2Zm4.5 1A3.5 3.5 0 0 0 16 15.5c0 .82.29 1.57.77 2.17L16 23l3.5-2 3.5 2-.77-5.33A3.5 3.5 0 0 0 19.5 12Zm0 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
+          />
+        </svg>
+        Certificates
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <span class="avatar">{{ initials }}</span>
+      <span class="user-copy">
+        <strong>{{ displayName }}</strong>
+        <small>{{ role }}</small>
+      </span>
+      <button
+        type="button"
+        class="logout-button"
+        (click)="logout()"
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M10 17v2H5V5h5v2h2V3H3v18h9v-4h-2Zm7-8-1.41 1.41L18.17 13H9v2h9.17l-2.58 2.59L17 19l5-5-5-5Z"
+          />
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <button
+    class="nav-scrim"
+    type="button"
+    aria-label="Close navigation"
+    (click)="closeMenu()"
+  ></button>
+
+  <section class="workspace">
+    <header class="topbar">
+      <button
+        type="button"
+        class="menu-button"
+        (click)="menuOpen.update((open) => !open)"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Toggle navigation"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" />
+        </svg>
+      </button>
+      <div class="topbar-copy">
+        <span class="topbar-label">Training management system</span>
+        <span class="topbar-date">{{ today }}</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="system-status"><i aria-hidden="true"></i> System ready</span>
+        <span class="mobile-avatar" aria-label="Signed in as {{ displayName }}">{{
+          initials
+        }}</span>
+      </div>
+    </header>
+
+    <main class="workspace-content" (click)="closeMenu()">
+      <router-outlet />
+    </main>
+  </section>
+</div>

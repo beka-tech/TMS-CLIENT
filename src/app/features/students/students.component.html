@@ -1,0 +1,409 @@
+<section
+  class="content-page students-page"
+  aria-labelledby="students-heading"
+  [attr.inert]="dialogMode() ? '' : null"
+>
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">People</p>
+      <h1 id="students-heading">Students</h1>
+      <p class="page-subtitle">Keep learner records accurate and ready for enrollment.</p>
+    </div>
+
+    <div class="page-actions">
+      <button class="btn btn-primary" type="button" (click)="openAddDialog()">
+        <span aria-hidden="true">+</span>
+        Add Student
+      </button>
+    </div>
+  </header>
+
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{{ feedback() }}</p>
+
+  <section class="panel students-panel" aria-labelledby="student-directory-heading">
+    <div class="panel-heading students-toolbar">
+      <div>
+        <h2 id="student-directory-heading">Student directory</h2>
+        <p aria-live="polite">
+          {{ filteredStudents().length }} of {{ data.students().length }} students
+        </p>
+      </div>
+
+      <div class="student-search">
+        <label for="student-search">Search students</label>
+        <span class="student-search-control">
+          <span class="search-symbol" aria-hidden="true">⌕</span>
+          <input
+            #searchInput
+            id="student-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Name, registration no. or email"
+            [value]="searchQuery()"
+            (input)="updateSearch($event)"
+          />
+          @if (searchQuery()) {
+            <button type="button" (click)="clearSearch()" aria-label="Clear student search">
+              Clear
+            </button>
+          }
+        </span>
+      </div>
+    </div>
+
+    <div class="table-wrap" tabindex="0" aria-label="Student records, horizontally scrollable">
+      <table class="data-table students-table">
+        <caption class="sr-only">
+          Student registration numbers, names, grade point averages, activity status, and actions
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Reg No</th>
+            <th scope="col">Name</th>
+            <th scope="col">GPA</th>
+            <th scope="col">Active</th>
+            <th scope="col"><span class="sr-only">Student </span>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (student of filteredStudents(); track student.id) {
+            <tr>
+              <td data-label="Reg No">
+                <span class="registration-number">{{ student.registrationNumber }}</span>
+              </td>
+              <td data-label="Name">
+                <span class="student-identity">
+                  <strong>{{ student.name }}</strong>
+                  <span>{{ student.email }}</span>
+                </span>
+              </td>
+              <td data-label="GPA">
+                <span class="gpa-value">{{ student.gpa.toFixed(1) }}</span>
+              </td>
+              <td data-label="Active">
+                <span
+                  class="status-pill"
+                  [class.active]="student.active"
+                  [class.inactive]="!student.active"
+                >
+                  {{ student.active ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td class="actions-cell" data-label="Actions">
+                <div class="student-actions">
+                  <button
+                    class="btn btn-quiet btn-sm"
+                    type="button"
+                    (click)="openViewDialog(student)"
+                    [attr.aria-label]="'View ' + student.name"
+                  >
+                    View
+                  </button>
+                  <button
+                    class="btn btn-quiet btn-sm"
+                    type="button"
+                    (click)="openEditDialog(student)"
+                    [attr.aria-label]="'Edit ' + student.name"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    class="btn btn-danger btn-sm"
+                    type="button"
+                    (click)="openDeleteDialog(student)"
+                    [attr.aria-label]="'Delete ' + student.name"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr class="student-empty-row">
+              <td colspan="5">
+                <div class="empty-state student-empty-state">
+                  <div>
+                    <strong>No students found</strong>
+                    <p>Try a different name, registration number, or email.</p>
+                    @if (searchQuery()) {
+                      <button
+                        class="btn btn-secondary btn-sm"
+                        type="button"
+                        (click)="clearSearch()"
+                      >
+                        Clear search
+                      </button>
+                    }
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+@if (dialogMode(); as mode) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="onBackdropClick($event)"
+    (keydown)="onModalKeydown($event)"
+  >
+    <section
+      #dialogPanel
+      class="modal student-modal"
+      [class.student-delete-modal]="mode === 'delete'"
+      [attr.role]="mode === 'delete' ? 'alertdialog' : 'dialog'"
+      aria-modal="true"
+      aria-labelledby="student-dialog-title"
+      [attr.aria-describedby]="mode === 'delete' ? 'delete-student-description' : null"
+      tabindex="-1"
+    >
+      @if (mode === 'add' || mode === 'edit') {
+        <form [formGroup]="studentForm" (ngSubmit)="saveStudent()" novalidate>
+          <header class="dialog-header">
+            <div>
+              <h2 id="student-dialog-title">
+                {{ mode === 'add' ? 'Add student' : 'Edit student' }}
+              </h2>
+            </div>
+            <button
+              class="icon-btn"
+              type="button"
+              (click)="closeDialog()"
+              aria-label="Close student form"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </header>
+
+          <div class="dialog-body form-grid">
+            <div class="field">
+              <label for="student-registration-number">Registration number</label>
+              <input
+                #modalFocusTarget
+                id="student-registration-number"
+                type="text"
+                formControlName="registrationNumber"
+                autocomplete="off"
+                maxlength="20"
+                placeholder="TMS-009"
+                aria-describedby="student-registration-help"
+                [attr.aria-invalid]="
+                  studentForm.controls.registrationNumber.touched &&
+                  studentForm.controls.registrationNumber.invalid
+                "
+              />
+              <div id="student-registration-help" class="field-message">
+                @if (
+                  studentForm.controls.registrationNumber.touched &&
+                  studentForm.controls.registrationNumber.hasError('required')
+                ) {
+                  <span class="field-error">Registration number is required.</span>
+                } @else if (
+                  studentForm.controls.registrationNumber.touched &&
+                  studentForm.controls.registrationNumber.invalid
+                ) {
+                  <span class="field-error">Use 3–20 letters, numbers, or hyphens.</span>
+                } @else {
+                  <span>Use letters, numbers, and hyphens.</span>
+                }
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="student-name">Full name</label>
+              <input
+                id="student-name"
+                type="text"
+                formControlName="name"
+                autocomplete="name"
+                maxlength="80"
+                placeholder="Abebe Bekele"
+                [attr.aria-invalid]="
+                  studentForm.controls.name.touched && studentForm.controls.name.invalid
+                "
+                [attr.aria-describedby]="
+                  studentForm.controls.name.touched && studentForm.controls.name.invalid
+                    ? 'student-name-error'
+                    : null
+                "
+              />
+              @if (studentForm.controls.name.touched && studentForm.controls.name.invalid) {
+                <span id="student-name-error" class="field-error"
+                  >Enter a name with at least 2 characters.</span
+                >
+              }
+            </div>
+
+            <div class="field full">
+              <label for="student-email">Email address</label>
+              <input
+                id="student-email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                maxlength="120"
+                placeholder="student@tms.edu"
+                [attr.aria-invalid]="
+                  studentForm.controls.email.touched && studentForm.controls.email.invalid
+                "
+                [attr.aria-describedby]="
+                  studentForm.controls.email.touched && studentForm.controls.email.invalid
+                    ? 'student-email-error'
+                    : null
+                "
+              />
+              @if (studentForm.controls.email.touched && studentForm.controls.email.invalid) {
+                <span id="student-email-error" class="field-error"
+                  >Enter a valid email address.</span
+                >
+              }
+            </div>
+
+            <div class="field">
+              <label for="student-gpa">GPA</label>
+              <input
+                id="student-gpa"
+                type="number"
+                formControlName="gpa"
+                min="0"
+                max="4"
+                step="0.1"
+                inputmode="decimal"
+                [attr.aria-invalid]="
+                  studentForm.controls.gpa.touched && studentForm.controls.gpa.invalid
+                "
+                [attr.aria-describedby]="
+                  studentForm.controls.gpa.touched && studentForm.controls.gpa.invalid
+                    ? 'student-gpa-error'
+                    : 'student-gpa-help'
+                "
+              />
+              @if (studentForm.controls.gpa.touched && studentForm.controls.gpa.invalid) {
+                <span id="student-gpa-error" class="field-error">GPA must be between 0 and 4.</span>
+              } @else {
+                <span id="student-gpa-help" class="field-message">Scale: 0.0–4.0</span>
+              }
+            </div>
+
+            <label class="checkbox-field student-active-control">
+              <input type="checkbox" formControlName="active" />
+              <span>
+                <strong>Active student</strong>
+                <small>Available for new enrollments</small>
+              </span>
+            </label>
+
+            @if (dialogError()) {
+              <p class="form-message error student-form-message" role="alert">
+                {{ dialogError() }}
+              </p>
+            }
+          </div>
+
+          <footer class="dialog-actions">
+            <button class="btn btn-secondary" type="button" (click)="closeDialog()">Cancel</button>
+            <button class="btn btn-primary" type="submit">
+              {{ mode === 'add' ? 'Add Student' : 'Save Changes' }}
+            </button>
+          </footer>
+        </form>
+      } @else if (mode === 'view') {
+        @if (selectedStudent(); as student) {
+          <header class="dialog-header">
+            <div>
+              <h2 id="student-dialog-title">{{ student.name }}</h2>
+            </div>
+            <button
+              #modalFocusTarget
+              class="icon-btn"
+              type="button"
+              (click)="closeDialog()"
+              aria-label="Close student details"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </header>
+
+          <div class="dialog-body">
+            <div class="student-profile-heading">
+              <span class="student-avatar" aria-hidden="true">{{ student.name.charAt(0) }}</span>
+              <span>
+                <strong>{{ student.registrationNumber }}</strong>
+                <span
+                  class="status-pill"
+                  [class.active]="student.active"
+                  [class.inactive]="!student.active"
+                >
+                  {{ student.active ? 'Active' : 'Inactive' }}
+                </span>
+              </span>
+            </div>
+
+            <dl class="detail-list student-details">
+              <div>
+                <dt>Email</dt>
+                <dd>
+                  <a [href]="'mailto:' + student.email">{{ student.email }}</a>
+                </dd>
+              </div>
+              <div>
+                <dt>GPA</dt>
+                <dd>{{ student.gpa.toFixed(1) }} / 4.0</dd>
+              </div>
+              <div>
+                <dt>Registration</dt>
+                <dd>{{ student.registrationNumber }}</dd>
+              </div>
+              <div>
+                <dt>Enrollment access</dt>
+                <dd>{{ student.active ? 'Enabled' : 'Paused' }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <footer class="dialog-actions">
+            <button class="btn btn-secondary" type="button" (click)="closeDialog()">Close</button>
+          </footer>
+        }
+      } @else if (mode === 'delete') {
+        @if (selectedStudent(); as student) {
+          <header class="dialog-header">
+            <div>
+              <h2 id="student-dialog-title">Delete student?</h2>
+            </div>
+          </header>
+
+          <div class="dialog-body student-delete-copy" id="delete-student-description">
+            <p>
+              You are about to delete <strong>{{ student.name }}</strong> ({{
+                student.registrationNumber
+              }}).
+            </p>
+            <p>
+              This also removes their enrollments and certificates. This action cannot be undone.
+            </p>
+          </div>
+
+          <footer class="dialog-actions">
+            <button
+              #modalFocusTarget
+              class="btn btn-secondary"
+              type="button"
+              (click)="closeDialog()"
+            >
+              Keep Student
+            </button>
+            <button class="btn btn-danger" type="button" (click)="confirmDelete()">
+              Delete Student
+            </button>
+          </footer>
+        }
+      }
+    </section>
+  </div>
+}

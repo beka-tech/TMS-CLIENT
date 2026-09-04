@@ -1,3 +1,161 @@
-<h1>Course Detail</h1>
-<p>Course ID: {{ id() }}</p>
-<a routerLink="/dashboard">Back to Dashboard</a>
+<main class="content-page">
+  <a class="back-link" routerLink="/courses"><span aria-hidden="true">←</span> All courses</a>
+
+  @if (course(); as course) {
+    <header class="page-header course-heading">
+      <div>
+        <p class="page-kicker">{{ course.code }}</p>
+        <h1>{{ course.title }}</h1>
+        <p class="page-subtitle">{{ course.description }}</p>
+      </div>
+      <div class="instructor-card">
+        <span>Instructor</span>
+        <strong>{{ course.instructor }}</strong>
+      </div>
+    </header>
+
+    <section class="detail-grid">
+      <article class="panel overview-panel" aria-labelledby="course-overview-heading">
+        <div class="section-heading">
+          <div>
+            <p class="page-kicker">Course overview</p>
+            <h2 id="course-overview-heading">Capacity</h2>
+          </div>
+          <strong class="capacity-number">{{ enrollmentCount() }} / {{ course.capacity }}</strong>
+        </div>
+
+        <div
+          class="capacity-track"
+          role="progressbar"
+          [attr.aria-label]="course.title + ' capacity'"
+          aria-valuemin="0"
+          [attr.aria-valuemax]="course.capacity"
+          [attr.aria-valuenow]="enrollmentCount()"
+        >
+          <span [style.width.%]="capacityPercent()"></span>
+        </div>
+        <p class="capacity-note">
+          @if (spacesRemaining() > 0) {
+            {{ spacesRemaining() }} spaces remaining
+          } @else {
+            Course is at capacity
+          }
+        </p>
+
+        <dl class="metadata-list">
+          <div>
+            <dt>Course code</dt>
+            <dd>{{ course.code }}</dd>
+          </div>
+          <div>
+            <dt>Instructor</dt>
+            <dd>{{ course.instructor }}</dd>
+          </div>
+          <div>
+            <dt>Assessments</dt>
+            <dd>{{ course.assessments.length }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="panel assessments-panel" aria-labelledby="assessment-heading">
+        <div class="section-heading">
+          <div>
+            <p class="page-kicker">Evaluation plan</p>
+            <h2 id="assessment-heading">Assessments</h2>
+          </div>
+          <span>{{ course.assessments.length }} items</span>
+        </div>
+
+        <div class="assessment-list">
+          @for (assessment of course.assessments; track assessment.id) {
+            <div class="assessment-row">
+              <span class="assessment-type">{{ assessment.type }}</span>
+              <div>
+                <strong>{{ assessment.title }}</strong>
+                <small>{{ assessment.weight }}% of final grade</small>
+              </div>
+              <strong class="assessment-weight">{{ assessment.weight }}%</strong>
+            </div>
+          } @empty {
+            <div class="empty-section">
+              <strong>No assessments yet</strong>
+              <span>Assessment details will appear here when added.</span>
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="panel students-panel" aria-labelledby="enrolled-students-heading">
+      <div class="section-heading students-heading">
+        <div>
+          <p class="page-kicker">Class roster</p>
+          <h2 id="enrolled-students-heading">Enrolled students</h2>
+        </div>
+        <span>{{ enrolledStudents().length }} students</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table roster-table">
+          <thead>
+            <tr>
+              <th scope="col">Registration</th>
+              <th scope="col">Student</th>
+              <th scope="col">Status</th>
+              <th scope="col">Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of enrolledStudents(); track row.enrollment.id) {
+              <tr>
+                <td>
+                  <span class="registration">{{ row.student.registrationNumber }}</span>
+                </td>
+                <td>
+                  <div class="student-name">
+                    <strong>{{ row.student.name }}</strong>
+                    <span>{{ row.student.email }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span
+                    class="status-pill"
+                    [class.approved]="row.enrollment.status === 'Approved'"
+                    [class.pending]="row.enrollment.status === 'Pending'"
+                  >
+                    {{ row.enrollment.status }}
+                  </span>
+                </td>
+                <td>
+                  @if (row.enrollment.grade !== null) {
+                    <strong>{{ row.enrollment.grade }}</strong>
+                  } @else {
+                    <span class="no-grade">—</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4">
+                  <div class="empty-section">
+                    <strong>No enrolled students</strong>
+                    <span>Approved and pending enrollments will appear here.</span>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  } @else {
+    <section class="panel not-found" role="status">
+      <div class="not-found-mark" aria-hidden="true">?</div>
+      <p class="page-kicker">Course unavailable</p>
+      <h1>We could not find that course</h1>
+      <p>The course ID “{{ id() }}” does not match a current catalogue entry.</p>
+      <a class="btn btn-primary" routerLink="/courses">Return to courses</a>
+    </section>
+  }
+</main>
