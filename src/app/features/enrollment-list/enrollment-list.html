@@ -17,6 +17,21 @@
     </div>
   </header>
 
+  @if (data.enrollmentLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading enrollments...</span
+      >
+    </div>
+  } @else if (data.enrollmentLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.enrollmentLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadEnrollments()">
+        Retry
+      </button>
+    </div>
+  }
+
   @if (feedback(); as notice) {
     <div
       class="feedback-banner"
@@ -186,6 +201,9 @@
             /></svg
           ><strong>No matching enrollments</strong>
           <p>Try a different search or status filter.</p>
+          <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadEnrollments()">
+            Retry
+          </button>
         </div>
       </div>
     }

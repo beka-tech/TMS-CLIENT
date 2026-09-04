@@ -1,72 +1,159 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, Service, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import {
+  Observable,
+  catchError,
+  finalize,
+  firstValueFrom,
+  map,
+  of,
+  shareReplay,
+  throwError,
+} from 'rxjs';
+import { API_ENDPOINTS } from '../core/api-endpoints';
+import { authRequestContext } from '../core/http-context';
+import {
+  AuthResponse,
+  AuthTokens,
+  AuthUser,
+  LoginRequest,
+  normalizeUserRole,
+} from '../models/auth.model';
+import { ApiClientService } from './api-client.service';
+import { AuthStateService } from './auth-state.service';
 
-// export interface TmsUser {
-//   displayName: string;
-//   role: string;
-// }
-// export interface LoginRequest {
-//   username: string;
-//   password: string;
-// }
-// @Service()
-// export class AuthService {
-//   private http = inject(HttpClient);
-//   currentUser = signal<TmsUser | null>(null);
-//   hasRole(role: string): boolean {
-//     const user = this.currentUser();
-//     return user?.role === role || user?.role === 'Admin';
-//   }
-//   async login(credentials: LoginRequest) {
-//     // Server sets the HttpOnly cookie in the Set-Cookie responseheader
-//     await firstValueFrom(this.http.post<void>('/api/auth/login', credentials));
-//     // Fetch authenticated profile — browser automatically sendsthe cookie
-//     const user = await firstValueFrom(this.http.get<TmsUser>('/api/auth/me'));
-//     this.currentUser.set(user);
-//   }
-// }
-export interface TmsUser {
-  email: string;
-  displayName: string;
-  role: string;
+interface JwtClaims {
+  sub?: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  [claim: string]: unknown;
 }
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private accessToken = signal<string | null>(null);
-  currentUser = signal<TmsUser | null>(null);
+  private readonly api = inject(ApiClientService);
+  private readonly state = inject(AuthStateService);
+  private refreshRequest$: Observable<string> | null = null;
+
+  readonly accessToken = this.state.accessToken;
+  readonly refreshToken = this.state.refreshToken;
+  readonly currentUser = this.state.currentUser;
+  readonly role = this.state.role;
+  readonly isAuthenticated = this.state.isAuthenticated;
+
   getAccessToken(): string | null {
-    return this.accessToken();
+    return this.state.accessToken();
   }
+
+  getRefreshToken(): string | null {
+    return this.state.refreshToken();
+  }
+
   hasRole(role: string): boolean {
-    const user = this.currentUser();
-    return user?.role === role || user?.role === 'Admin';
+    return this.state.role() === normalizeUserRole(role);
   }
+
   async login(credentials: LoginRequest): Promise<void> {
-    const res = await firstValueFrom(this.http.post<AuthResponse>('/api/auth/login', credentials));
-    this.accessToken.set(res.accessToken);
-    // Decode user payload from JWT (or fetch /api/auth/me)
-    const payload = JSON.parse(atob(res.accessToken.split('.')[1]));
-    this.currentUser.set({
-      email: payload.email || payload.sub,
-      displayName: payload.name || payload.email || 'User',
-      role:
-        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
-        payload.role ||
-        'Student',
-    });
+    const response = await firstValueFrom(
+      this.api.post<AuthResponse, LoginRequest>(API_ENDPOINTS.auth.login, credentials, {
+        context: authRequestContext(true),
+      }),
+    );
+    const user = response.user
+      ? this.normalizeUser(response.user)
+      : this.userFromToken(response.accessToken, credentials.email);
+    this.state.setSession(this.tokensFromResponse(response), user);
   }
+
+  refreshSession(): Observable<string> {
+    if (this.refreshRequest$) return this.refreshRequest$;
+
+    const refreshToken = this.state.refreshToken();
+    if (!refreshToken) return throwError(() => new Error('No refresh token is available.'));
+
+    this.refreshRequest$ = this.api
+      .post<AuthResponse, { refreshToken: string }>(
+        API_ENDPOINTS.auth.refresh,
+        { refreshToken },
+        { context: authRequestContext(true) },
+      )
+      .pipe(
+        map((response) => {
+          const user = response.user
+            ? this.normalizeUser(response.user)
+            : (this.state.currentUser() ??
+              this.userFromToken(response.accessToken, 'user@tms.local'));
+          this.state.setSession(this.tokensFromResponse(response), user);
+          return response.accessToken;
+        }),
+        finalize(() => (this.refreshRequest$ = null)),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+
+    return this.refreshRequest$;
+  }
+
+  loadCurrentUser(): Observable<AuthUser> {
+    return this.api.get<AuthUser>(API_ENDPOINTS.auth.currentUser).pipe(
+      map((user) => ({ ...user, role: normalizeUserRole(user.role) })),
+      map((user) => {
+        this.state.setCurrentUser(user);
+        return user;
+      }),
+    );
+  }
+
   logout(): void {
-    this.accessToken.set(null);
-    this.currentUser.set(null);
+    const refreshToken = this.state.refreshToken();
+    this.state.clear();
+    if (!refreshToken) return;
+
+    this.api
+      .post<void, { refreshToken: string }>(
+        API_ENDPOINTS.auth.logout,
+        { refreshToken },
+        { context: authRequestContext(true) },
+      )
+      .pipe(catchError(() => of(void 0)))
+      .subscribe();
+  }
+
+  expireSession(): void {
+    this.state.clear();
+  }
+
+  private tokensFromResponse(response: AuthResponse): AuthTokens {
+    return { accessToken: response.accessToken, refreshToken: response.refreshToken };
+  }
+
+  private userFromToken(accessToken: string, fallbackEmail: string): AuthUser {
+    const claims = this.decodeJwt(accessToken);
+    const roleClaim =
+      claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ?? claims.role;
+    const email = String(claims.email ?? claims.sub ?? fallbackEmail);
+    return {
+      id: claims.sub,
+      email,
+      displayName: String(claims.name ?? claims.email ?? email),
+      role: normalizeUserRole(Array.isArray(roleClaim) ? roleClaim[0] : roleClaim),
+    };
+  }
+
+  private normalizeUser(user: AuthUser): AuthUser {
+    return { ...user, role: normalizeUserRole(user.role) };
+  }
+
+  private decodeJwt(token: string): JwtClaims {
+    try {
+      const segment = token.split('.')[1];
+      if (!segment) return {};
+      const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+      return JSON.parse(atob(padded)) as JwtClaims;
+    } catch {
+      return {};
+    }
   }
 }
+
+export type { AuthResponse, AuthUser as TmsUser, LoginRequest } from '../models/auth.model';

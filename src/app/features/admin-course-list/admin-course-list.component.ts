@@ -25,7 +25,7 @@ import { CourseService } from '../../services/course.service';
             <tr>
               <th scope="col">Code</th>
               <th scope="col">Title</th>
-              <th scope="col">Enrollment</th>
+              <th scope="col">Capacity</th>
               @if (auth.hasRole('Admin')) {
                 <th scope="col">Actions</th>
               }
@@ -36,7 +36,7 @@ import { CourseService } from '../../services/course.service';
               <tr>
                 <td>{{ course.code }}</td>
                 <td>{{ course.title }}</td>
-                <td>{{ course.enrollmentCount }} / {{ course.maxCapacity }}</td>
+                <td>{{ course.capacity }}</td>
                 @if (auth.hasRole('Admin')) {
                   <td>
                     <button

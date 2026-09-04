@@ -17,6 +17,21 @@
     </div>
   </header>
 
+  @if (data.certificateLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading certificates...</span
+      >
+    </div>
+  } @else if (data.certificateLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.certificateLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadCertificates()">
+        Retry
+      </button>
+    </div>
+  }
+
   @if (!issueDialogOpen() && feedback(); as notice) {
     <div
       class="feedback-banner"
@@ -93,6 +108,9 @@
           <p>
             {{ searchTerm() ? 'Try a different search.' : 'Issued certificates will appear here.' }}
           </p>
+          <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadCertificates()">
+            Retry
+          </button>
         </div>
       </div>
     }

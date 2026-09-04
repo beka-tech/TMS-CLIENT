@@ -1,16 +1,22 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Service } from '@angular/core';
-import { Observable } from 'rxjs/internal/Observable';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { API_ENDPOINTS } from '../core/api-endpoints';
+import { ApiClientService } from './api-client.service';
+
 export interface GradePayload {
   studentId: number;
   courseId: number;
   score: number;
 }
 
-@Service()
+@Injectable({ providedIn: 'root' })
 export class GradeService {
-  private http = inject(HttpClient);
+  private readonly api = inject(ApiClientService);
+
   postGrade(payload: GradePayload): Observable<{ id: string; success: boolean }> {
-    return this.http.post<{ id: string; success: boolean }>('/api/grades', payload);
+    return this.api.post<{ id: string; success: boolean }, GradePayload>(
+      API_ENDPOINTS.grades,
+      payload,
+    );
   }
 }

@@ -51,3 +51,36 @@ export interface EnrollmentDraft {
   studentId: number;
   courseId: number;
 }
+
+export interface GradeDraft {
+  enrollmentId: string;
+  score: number;
+}
+
+export interface CertificateDraft {
+  enrollmentId: string;
+}
+
+export type TranscriptStatus = 'Queued' | 'Processing' | 'Completed' | 'Failed';
+
+export interface TranscriptRequest {
+  studentId: number;
+}
+
+export interface TranscriptReport {
+  reportId: string;
+  studentId: number;
+  status: TranscriptStatus;
+  requestedAt?: string;
+  completedAt?: string | null;
+  downloadUrl?: string | null;
+  errorMessage?: string | null;
+}
+
+export interface DashboardSummary {
+  students: number;
+  activeStudents: number;
+  courses: number;
+  enrolled: number;
+  pending: number;
+}

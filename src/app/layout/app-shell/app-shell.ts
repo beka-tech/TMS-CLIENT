@@ -1,6 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { GlobalMessageService } from '../../services/global-message.service';
+import { LiveSyncService } from '../../services/live-sync';
+import { TmsDataService } from '../../services/tms-data.service';
 
 @Component({
   selector: 'tms-app-shell',
@@ -12,13 +15,45 @@ import { AuthService } from '../../services/auth.service';
 export class AppShellComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly data = inject(TmsDataService);
+  protected readonly liveSync = inject(LiveSyncService);
+  protected readonly globalMessages = inject(GlobalMessageService);
 
   readonly menuOpen = signal(false);
+  protected readonly canManageStudents = computed(() => this.auth.hasRole('Administrator'));
+  protected readonly canManageEnrollments = computed(
+    () => this.auth.hasRole('Instructor') || this.auth.hasRole('Administrator'),
+  );
+  protected readonly canManageCertificates = computed(() => this.auth.hasRole('Administrator'));
+  protected readonly connectionLabel = computed(() => {
+    switch (this.liveSync.connectionState()) {
+      case 'connected':
+        return 'Live updates on';
+      case 'connecting':
+        return 'Connecting';
+      case 'reconnecting':
+        return 'Reconnecting';
+      default:
+        return 'Updates offline';
+    }
+  });
   readonly today = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
   }).format(new Date());
+
+  constructor() {
+    effect(() => {
+      const role = this.auth.role();
+      if (this.auth.isAuthenticated() && role) {
+        this.data.loadForRole(role);
+        void this.liveSync.connect();
+      } else {
+        void this.liveSync.stop();
+      }
+    });
+  }
 
   get displayName(): string {
     return this.auth.currentUser()?.displayName ?? 'Mulugeta Tadesse';

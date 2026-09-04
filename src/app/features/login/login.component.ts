@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -14,6 +14,7 @@ export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly isSubmitting = signal(false);
   readonly showPassword = signal(false);
@@ -36,7 +37,8 @@ export class LoginComponent {
 
     try {
       await this.authService.login(this.loginForm.getRawValue());
-      await this.router.navigate(['/dashboard']);
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      await this.router.navigateByUrl(returnUrl?.startsWith('/') ? returnUrl : '/dashboard');
     } catch {
       this.errorMessage.set('We could not sign you in. Check your details and try again.');
     } finally {

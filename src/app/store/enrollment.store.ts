@@ -8,7 +8,7 @@ import { pipe, concatMap, tap, catchError, EMPTY, switchMap } from 'rxjs';
 import { EnrollmentService } from '../services/enrollment';
 
 import { LiveSyncService } from '../services/live-sync'; // Import this
-import { Enrollment } from '../models/enrollment.model';
+import { EnrollmentRecord } from '../models/tms.model';
 
 export const EnrollmentStore = signalStore(
   { providedIn: 'root' },
@@ -20,7 +20,7 @@ export const EnrollmentStore = signalStore(
   }),
 
   // Stores enrollments as an entity collection for efficient lookups.
-  withEntities<Enrollment>(),
+  withEntities<EnrollmentRecord>(),
 
   // Derived state that automatically updates whenever the entity collection changes.
   withComputed((store) => ({

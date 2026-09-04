@@ -15,6 +15,21 @@
     </button>
   </header>
 
+  @if (data.courseLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading courses...</span
+      >
+    </div>
+  } @else if (data.courseLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.courseLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadCourses()">
+        Retry
+      </button>
+    </div>
+  }
+
   @if (feedback()) {
     <div class="feedback-banner success" role="status">
       <span>{{ feedback() }}</span>
@@ -106,6 +121,13 @@
                 <div class="empty-courses">
                   <strong>No courses found</strong>
                   <span>Try a different search or add a new course.</span>
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    type="button"
+                    (click)="data.loadCourses()"
+                  >
+                    Retry
+                  </button>
                 </div>
               </td>
             </tr>

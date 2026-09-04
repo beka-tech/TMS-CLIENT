@@ -25,7 +25,7 @@ describe('CourseService', () => {
   it('deletes a course by id', () => {
     service.delete(42).subscribe();
 
-    const request = http.expectOne('http://localhost:5150/api/v1/courses/42');
+    const request = http.expectOne('/api/v1/courses/42');
     expect(request.request.method).toBe('DELETE');
     request.flush(null);
   });

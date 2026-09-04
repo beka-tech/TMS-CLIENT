@@ -20,6 +20,21 @@
 
   <p class="sr-only" aria-live="polite" aria-atomic="true">{{ feedback() }}</p>
 
+  @if (data.studentLoadState().loading) {
+    <div class="load-state" role="status">
+      <span class="loading-copy"
+        ><i class="loading-spinner" aria-hidden="true"></i> Loading students...</span
+      >
+    </div>
+  } @else if (data.studentLoadState().error) {
+    <div class="load-state error" role="alert">
+      <span>{{ data.studentLoadState().error }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" (click)="data.loadStudents()">
+        Retry
+      </button>
+    </div>
+  }
+
   <section class="panel students-panel" aria-labelledby="student-directory-heading">
     <div class="panel-heading students-toolbar">
       <div>
@@ -132,6 +147,14 @@
                         (click)="clearSearch()"
                       >
                         Clear search
+                      </button>
+                    } @else {
+                      <button
+                        class="btn btn-secondary btn-sm"
+                        type="button"
+                        (click)="data.loadStudents()"
+                      >
+                        Retry
                       </button>
                     }
                   </div>
@@ -364,6 +387,8 @@
                 <dd>{{ student.active ? 'Enabled' : 'Paused' }}</dd>
               </div>
             </dl>
+
+            <tms-transcript-request [studentId]="student.id" [studentName]="student.name" />
           </div>
 
           <footer class="dialog-actions">

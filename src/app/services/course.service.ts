@@ -1,32 +1,57 @@
-import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
-import { Course, CourseDetail, PagedResponse } from '../models/course.model';
-// @Service() means Angular creates one instance of this service
-// and shares it across the entire app. This is the Angular 22 shorthand replacing legacy @Injectable.
-// This is similar to AddSingleton<T>() in .NET's dependency injection.
-@Service()
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { API_ENDPOINTS, resourceUrl } from '../core/api-endpoints';
+import { CourseDraft, TrainingCourse } from '../models/tms.model';
+import { ApiClientService, ApiQuery } from './api-client.service';
+
+interface CourseApiModel extends Partial<TrainingCourse> {
+  id: number;
+  code: string;
+  title: string;
+  maxCapacity?: number;
+}
+
+@Injectable({ providedIn: 'root' })
 export class CourseService {
-  // inject(HttpClient) requests Angular's HTTP client the same pattern as inject(FormBuilder)
-  private http = inject(HttpClient);
-  // private baseUrl = 'http://localhost:5150/api/courses';
-  private readonly base = `${environment.apiUrl}/courses`;
+  private readonly api = inject(ApiClientService);
 
-  getAll(page = 1, pageSize = 50) {
-    // This URL is GET /api/courses → map items[] (M6 catalogue envelope). Never accept a bare root [...].
-    // Switch to map((p) => p.data) if your base URL is GET /api/v2/courses; paging often nests under meta on that envelope (Step 1).
-    return this.http
-      .get<PagedResponse<Course>>(this.base, {
-        params: { page: page.toString(), pageSize: pageSize.toString() },
-      })
-      .pipe(map((p) => p.items));
-  }
-  getById(id: string) {
-    return this.http.get<CourseDetail>(`${this.base}/${id}`);
+  getAll(page = 1, pageSize = 50): Observable<TrainingCourse[]> {
+    const query: ApiQuery = { page, pageSize };
+    return this.api
+      .getCollection<CourseApiModel>(API_ENDPOINTS.courses, { params: query })
+      .pipe(map((courses) => courses.map((course) => this.normalize(course))));
   }
 
-  delete(id: number) {
-    return this.http.delete<void>(`${this.base}/${id}`);
+  getById(id: string | number): Observable<TrainingCourse> {
+    return this.api
+      .get<CourseApiModel>(resourceUrl(API_ENDPOINTS.courses, id))
+      .pipe(map((course) => this.normalize(course)));
+  }
+
+  create(course: CourseDraft): Observable<TrainingCourse> {
+    return this.api.post<TrainingCourse, CourseDraft>(API_ENDPOINTS.courses, course);
+  }
+
+  update(id: number, course: CourseDraft): Observable<TrainingCourse> {
+    return this.api.put<TrainingCourse, CourseDraft>(
+      resourceUrl(API_ENDPOINTS.courses, id),
+      course,
+    );
+  }
+
+  delete(id: number): Observable<void> {
+    return this.api.delete<void>(resourceUrl(API_ENDPOINTS.courses, id));
+  }
+
+  private normalize(course: CourseApiModel): TrainingCourse {
+    return {
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      description: course.description ?? 'Course details will be added soon.',
+      capacity: course.capacity ?? course.maxCapacity ?? 0,
+      instructor: course.instructor ?? 'To be assigned',
+      assessments: course.assessments ?? [],
+    };
   }
 }

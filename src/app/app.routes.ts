@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { AppShellComponent } from './layout/app-shell/app-shell';
+import { authGuard } from './guards/auth.guard';
+import { adminGuard, instructorGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -9,6 +11,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AppShellComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
@@ -19,6 +22,7 @@ export const routes: Routes = [
       },
       {
         path: 'students',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/students/students.component').then((m) => m.StudentsComponent),
       },
@@ -33,6 +37,7 @@ export const routes: Routes = [
       },
       {
         path: 'enrollments',
+        canActivate: [instructorGuard],
         loadComponent: () =>
           import('./features/enrollment-list/enrollment-list').then(
             (m) => m.EnrollmentListComponent,
@@ -40,6 +45,7 @@ export const routes: Routes = [
       },
       {
         path: 'certificates',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/certificates/certificates.component').then(
             (m) => m.CertificatesComponent,

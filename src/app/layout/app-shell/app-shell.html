@@ -22,19 +22,21 @@
         </svg>
         Dashboard
       </a>
-      <a
-        routerLink="/students"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-        (click)="closeMenu()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3ZM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"
-          />
-        </svg>
-        Students
-      </a>
+      @if (canManageStudents()) {
+        <a
+          routerLink="/students"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3ZM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"
+            />
+          </svg>
+          Students
+        </a>
+      }
       <a
         routerLink="/courses"
         routerLinkActive="active"
@@ -48,32 +50,36 @@
         </svg>
         Courses
       </a>
-      <a
-        routerLink="/enrollments"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-        (click)="closeMenu()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v16h18V5a2 2 0 0 0-2-2Zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm-1 14H7v-2h4v2Zm6-4H7v-2h10v2Zm0-4H7V7h10v2Z"
-          />
-        </svg>
-        Enrollments
-      </a>
-      <a
-        routerLink="/certificates"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-        (click)="closeMenu()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M17 3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H5V5h12v5h2V5a2 2 0 0 0-2-2Zm-6 4H7v2h4V7Zm4 4H7v2h8v-2Zm4.5 1A3.5 3.5 0 0 0 16 15.5c0 .82.29 1.57.77 2.17L16 23l3.5-2 3.5 2-.77-5.33A3.5 3.5 0 0 0 19.5 12Zm0 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
-          />
-        </svg>
-        Certificates
-      </a>
+      @if (canManageEnrollments()) {
+        <a
+          routerLink="/enrollments"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v16h18V5a2 2 0 0 0-2-2Zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm-1 14H7v-2h4v2Zm6-4H7v-2h10v2Zm0-4H7V7h10v2Z"
+            />
+          </svg>
+          Enrollments
+        </a>
+      }
+      @if (canManageCertificates()) {
+        <a
+          routerLink="/certificates"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M17 3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H5V5h12v5h2V5a2 2 0 0 0-2-2Zm-6 4H7v2h4V7Zm4 4H7v2h8v-2Zm4.5 1A3.5 3.5 0 0 0 16 15.5c0 .82.29 1.57.77 2.17L16 23l3.5-2 3.5 2-.77-5.33A3.5 3.5 0 0 0 19.5 12Zm0 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
+            />
+          </svg>
+          Certificates
+        </a>
+      }
     </nav>
 
     <div class="sidebar-user">
@@ -123,7 +129,17 @@
         <span class="topbar-date">{{ today }}</span>
       </div>
       <div class="topbar-actions">
-        <span class="system-status"><i aria-hidden="true"></i> System ready</span>
+        <span
+          class="system-status"
+          [class.connected]="liveSync.connectionState() === 'connected'"
+          [class.reconnecting]="
+            liveSync.connectionState() === 'connecting' ||
+            liveSync.connectionState() === 'reconnecting'
+          "
+          [title]="liveSync.lastError() ?? connectionLabel()"
+        >
+          <i aria-hidden="true"></i> {{ connectionLabel() }}
+        </span>
         <span class="mobile-avatar" aria-label="Signed in as {{ displayName }}">{{
           initials
         }}</span>
@@ -134,4 +150,19 @@
       <router-outlet />
     </main>
   </section>
+</div>
+
+<div class="toast-stack" aria-live="polite" aria-label="Application messages">
+  @for (message of globalMessages.messages(); track message.id) {
+    <div class="toast-message" [class]="'toast-message ' + message.kind" role="status">
+      <span>{{ message.text }}</span>
+      <button
+        type="button"
+        (click)="globalMessages.dismiss(message.id)"
+        aria-label="Dismiss message"
+      >
+        &times;
+      </button>
+    </div>
+  }
 </div>
