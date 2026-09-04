@@ -157,6 +157,7 @@
                       <button
                         type="button"
                         class="btn btn-primary btn-sm"
+                        [disabled]="operationPending()"
                         (click)="updateStatus(row, 'Approved')"
                       >
                         Approve
@@ -164,6 +165,7 @@
                       <button
                         type="button"
                         class="btn btn-quiet btn-sm reject-action"
+                        [disabled]="operationPending()"
                         (click)="updateStatus(row, 'Rejected')"
                       >
                         Reject
@@ -273,9 +275,16 @@
           </div>
         </div>
         <footer class="dialog-actions">
-          <button class="btn btn-secondary" type="button" (click)="closeEnrollDialog()">
+          <button
+            class="btn btn-secondary"
+            type="button"
+            [disabled]="operationPending()"
+            (click)="closeEnrollDialog()"
+          >
             Cancel</button
-          ><button class="btn btn-primary" type="submit">Enroll student</button>
+          ><button class="btn btn-primary" type="submit" [disabled]="operationPending()">
+            {{ operationPending() ? 'Enrolling...' : 'Enroll student' }}
+          </button>
         </footer>
       </form>
     </section>
@@ -332,9 +341,16 @@
           </div>
         </div>
         <footer class="dialog-actions">
-          <button class="btn btn-secondary" type="button" (click)="gradeEnrollment.set(null)">
+          <button
+            class="btn btn-secondary"
+            type="button"
+            [disabled]="operationPending()"
+            (click)="gradeEnrollment.set(null)"
+          >
             Cancel</button
-          ><button class="btn btn-primary" type="submit">Save grade</button>
+          ><button class="btn btn-primary" type="submit" [disabled]="operationPending()">
+            {{ operationPending() ? 'Saving...' : 'Save grade' }}
+          </button>
         </footer>
       </form>
     </section>

@@ -1,10 +1,9 @@
-export type EnrollmentStatus = 'Pending' | 'Approved' | 'Rejected';
+export type EnrollmentStatus = 'Pending' | 'Approved' | 'Rejected' | 'Completed';
 
 export interface Student {
   id: number;
   registrationNumber: string;
   name: string;
-  email: string;
   gpa: number;
   active: boolean;
 }
@@ -22,13 +21,16 @@ export interface TrainingCourse {
   id: number;
   code: string;
   title: string;
-  description: string;
   capacity: number;
-  instructor: string;
+  enrollmentCount?: number;
   assessments: readonly Assessment[];
 }
 
-export type CourseDraft = Omit<TrainingCourse, 'id' | 'assessments'>;
+export interface CourseDraft {
+  code: string;
+  title: string;
+  capacity: number;
+}
 
 export interface EnrollmentRecord {
   id: string;

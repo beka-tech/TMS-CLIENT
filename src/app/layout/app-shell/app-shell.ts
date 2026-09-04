@@ -56,11 +56,11 @@ export class AppShellComponent {
   }
 
   get displayName(): string {
-    return this.auth.currentUser()?.displayName ?? 'Mulugeta Tadesse';
+    return this.auth.currentUser()?.displayName ?? 'TMS User';
   }
 
   get role(): string {
-    return this.auth.currentUser()?.role ?? 'Training admin';
+    return this.auth.currentUser()?.role ?? 'Signed in';
   }
 
   get initials(): string {

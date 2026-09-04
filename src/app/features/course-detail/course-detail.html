@@ -19,11 +19,7 @@
       <div>
         <p class="page-kicker">{{ course.code }}</p>
         <h1>{{ course.title }}</h1>
-        <p class="page-subtitle">{{ course.description }}</p>
-      </div>
-      <div class="instructor-card">
-        <span>Instructor</span>
-        <strong>{{ course.instructor }}</strong>
+        <p class="page-subtitle">Enrollment capacity, assessments, and student roster.</p>
       </div>
     </header>
 
@@ -61,8 +57,8 @@
             <dd>{{ course.code }}</dd>
           </div>
           <div>
-            <dt>Instructor</dt>
-            <dd>{{ course.instructor }}</dd>
+            <dt>Enrolled students</dt>
+            <dd>{{ enrollmentCount() }}</dd>
           </div>
           <div>
             <dt>Assessments</dt>
@@ -128,7 +124,6 @@
                 <td>
                   <div class="student-name">
                     <strong>{{ row.student.name }}</strong>
-                    <span>{{ row.student.email }}</span>
                   </div>
                 </td>
                 <td>

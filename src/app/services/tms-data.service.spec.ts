@@ -1,118 +1,175 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { EnrollmentRecord, Student, TrainingCourse } from '../models/tms.model';
 import { TmsDataService } from './tms-data.service';
 
 describe('TmsDataService', () => {
   let service: TmsDataService;
+  let http: HttpTestingController;
+
+  const student: Student = {
+    id: 17,
+    registrationNumber: 'TMS-017',
+    name: 'API Student',
+    gpa: 3.5,
+    active: true,
+  };
+  const studentApiResponse = { ...student, isActive: student.active, active: undefined };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(TmsDataService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('adds, updates, and deletes students', () => {
-    const initialCount = service.students().length;
-    const created = service.addStudent({
-      registrationNumber: 'TMS-099',
-      name: 'Test Student',
-      email: 'test.student@tms.edu',
-      gpa: 3.5,
-      active: true,
-    });
+  afterEach(() => http.verify());
 
-    expect(service.students()).toHaveLength(initialCount + 1);
-    expect(service.studentById(created.id)?.name).toBe('Test Student');
+  it('starts empty and populates students only from the API', () => {
+    expect(service.students()).toEqual([]);
 
-    service.updateStudent(created.id, {
-      registrationNumber: 'TMS-099',
-      name: 'Updated Student',
-      email: 'updated.student@tms.edu',
-      gpa: 3.7,
-      active: false,
-    });
-    expect(service.studentById(created.id)).toMatchObject({
-      name: 'Updated Student',
-      gpa: 3.7,
-      active: false,
-    });
+    service.loadStudents();
+    expect(service.studentLoadState().loading).toBe(true);
+    http
+      .expectOne(
+        (request) =>
+          request.url === '/api/v2/students' &&
+          request.params.get('page') === '1' &&
+          request.params.get('pageSize') === '50',
+      )
+      .flush([studentApiResponse]);
 
-    service.deleteStudent(created.id);
-    expect(service.studentById(created.id)).toBeUndefined();
-    expect(service.students()).toHaveLength(initialCount);
+    expect(service.students()).toEqual([student]);
+    expect(service.studentLoadState()).toEqual({ loading: false, loaded: true, error: null });
   });
 
-  it('cascades student deletion to enrollments and certificates', () => {
-    expect(service.enrollments().some(({ studentId }) => studentId === 1)).toBe(true);
-    expect(service.certificates().some(({ studentId }) => studentId === 1)).toBe(true);
+  it('applies student CRUD only after the backend confirms it', () => {
+    const draft = { ...student };
+    delete (draft as Partial<Student>).id;
 
-    service.deleteStudent(1);
+    service.addStudent(draft).subscribe();
+    expect(service.students()).toEqual([]);
+    const create = http.expectOne('/api/v2/students');
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body).toEqual({
+      registrationNumber: student.registrationNumber,
+      name: student.name,
+      gpa: student.gpa,
+      isActive: true,
+    });
+    create.flush(studentApiResponse);
+    expect(service.students()).toEqual([student]);
 
-    expect(service.enrollments().some(({ studentId }) => studentId === 1)).toBe(false);
-    expect(service.certificates().some(({ studentId }) => studentId === 1)).toBe(false);
+    const updated = { ...student, name: 'Updated by API' };
+    service.updateStudent(student.id, { ...draft, name: updated.name }).subscribe();
+    expect(service.studentById(student.id)?.name).toBe(student.name);
+    const update = http.expectOne(`/api/v2/students/${student.id}`);
+    expect(update.request.method).toBe('PUT');
+    update.flush({ ...updated, isActive: updated.active, active: undefined });
+    expect(service.studentById(student.id)?.name).toBe(updated.name);
+
+    service.deleteStudent(student.id).subscribe();
+    expect(service.studentById(student.id)).toBeDefined();
+    const remove = http.expectOne(`/api/v2/students/${student.id}`);
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush(null);
+    expect(service.studentById(student.id)).toBeUndefined();
   });
 
-  it('adds a course with an empty assessment list', () => {
-    const initialCount = service.courses().length;
-    const course = service.addCourse({
-      code: 'TS-900',
+  it('creates courses from the server response', () => {
+    const course: TrainingCourse = {
+      id: 9,
+      code: 'TST-900',
       title: 'Testing Fundamentals',
-      description: 'A focused introduction to reliable automated tests.',
       capacity: 18,
-      instructor: 'Aster Demo',
+      enrollmentCount: 0,
+      assessments: [],
+    };
+
+    service
+      .addCourse({
+        code: course.code,
+        title: course.title,
+        capacity: course.capacity,
+      })
+      .subscribe();
+    expect(service.courses()).toEqual([]);
+    const request = http.expectOne('/api/v2/courses');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      code: course.code,
+      title: course.title,
+      maxCapacity: course.capacity,
     });
-
-    expect(service.courses()).toHaveLength(initialCount + 1);
-    expect(service.courseById(course.id)).toEqual(course);
-    expect(course.assessments).toEqual([]);
-  });
-
-  it('adds a pending enrollment and rejects an active duplicate', () => {
-    const firstResult = service.addEnrollment({ studentId: 5, courseId: 5 });
-    const created = service
-      .enrollments()
-      .find(({ studentId, courseId }) => studentId === 5 && courseId === 5);
-
-    expect(firstResult.ok).toBe(true);
-    expect(created).toMatchObject({ status: 'Pending', grade: null });
-    expect(service.addEnrollment({ studentId: 5, courseId: 5 }).ok).toBe(false);
-  });
-
-  it('updates status and clamps grades while approving the enrollment', () => {
-    service.addEnrollment({ studentId: 5, courseId: 5 });
-    const enrollment = service
-      .enrollments()
-      .find(({ studentId, courseId }) => studentId === 5 && courseId === 5);
-    expect(enrollment).toBeDefined();
-
-    service.setEnrollmentStatus(enrollment!.id, 'Rejected');
-    expect(service.enrollments().find(({ id }) => id === enrollment!.id)?.status).toBe('Rejected');
-
-    service.setGrade(enrollment!.id, 120);
-    expect(service.enrollments().find(({ id }) => id === enrollment!.id)).toMatchObject({
-      grade: 100,
-      status: 'Approved',
+    request.flush({
+      id: course.id,
+      code: course.code,
+      title: course.title,
+      maxCapacity: course.capacity,
+      enrollmentCount: 0,
     });
+    expect(service.courses()).toEqual([course]);
   });
 
-  it('issues one certificate only for an eligible enrollment', () => {
-    const initialCount = service.certificates().length;
+  it('creates, approves, and grades enrollments through the API', () => {
+    const pending: EnrollmentRecord = {
+      id: '2001',
+      studentId: 17,
+      courseId: 9,
+      status: 'Pending',
+      grade: null,
+      enrolledAt: '2026-09-04T12:00:00Z',
+    };
 
-    expect(service.issueCertificate('ENR-1002').ok).toBe(false);
+    service.loadCourses();
+    http
+      .expectOne((request) => request.url === '/api/v1/courses')
+      .flush({
+        items: [
+          {
+            id: 9,
+            code: 'TST-900',
+            title: 'Testing Fundamentals',
+            maxCapacity: 18,
+            enrollmentCount: 0,
+          },
+        ],
+      });
 
-    const issued = service.issueCertificate('ENR-1007');
-    expect(issued.ok).toBe(true);
-    expect(service.certificates()).toHaveLength(initialCount + 1);
-    expect(service.certificates()[0]).toMatchObject({
+    service.addEnrollment({ studentId: 17, courseId: 9 }).subscribe();
+    const create = http.expectOne('/api/v2/enrollments');
+    expect(create.request.body).toEqual({ studentId: 17, courseCode: 'TST-900' });
+    create.flush(pending);
+    expect(service.enrollments()).toEqual([pending]);
+
+    service.setEnrollmentStatus(pending.id, 'Approved').subscribe();
+    expect(service.enrollments()[0].status).toBe('Pending');
+    http.expectOne(`/api/v2/enrollments/${pending.id}/approve`).flush(null);
+    expect(service.enrollments()[0].status).toBe('Approved');
+
+    const graded = { ...pending, status: 'Approved' as const, grade: 88 };
+    service.setGrade(pending.id, 88).subscribe();
+    const grade = http.expectOne(`/api/v2/enrollments/${pending.id}/grade`);
+    expect(grade.request.method).toBe('PATCH');
+    expect(grade.request.body).toEqual({ grade: 88 });
+    grade.flush(null);
+    expect(service.enrollments()[0]).toEqual(graded);
+  });
+
+  it('adds certificates only from the issue response', () => {
+    service.issueCertificate('2001').subscribe();
+    expect(service.certificates()).toEqual([]);
+    const request = http.expectOne('/api/v1/certificates');
+    expect(request.request.body).toEqual({ enrollmentId: '2001' });
+    request.flush({
+      id: 4,
       serial: 'CERT-00004',
-      studentId: 8,
-      courseId: 2,
+      studentId: 17,
+      courseId: 9,
+      issuedAt: '2026-09-04T12:30:00Z',
     });
-
-    expect(service.issueCertificate('ENR-1007').ok).toBe(false);
-    expect(service.certificates()).toHaveLength(initialCount + 1);
+    expect(service.certificates()[0].serial).toBe('CERT-00004');
   });
 });

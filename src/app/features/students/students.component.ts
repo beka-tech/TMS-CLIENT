@@ -10,8 +10,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import { Student, StudentDraft } from '../../models/tms.model';
+import { apiErrorMessage } from '../../services/global-message.service';
 import { TmsDataService } from '../../services/tms-data.service';
 import { TranscriptRequestComponent } from '../../ui/transcript-request/transcript-request';
 
@@ -35,6 +37,7 @@ export class StudentsComponent {
   protected readonly selectedStudent = signal<Student | null>(null);
   protected readonly dialogError = signal('');
   protected readonly feedback = signal('');
+  protected readonly operationPending = signal(false);
 
   protected readonly filteredStudents = computed(() => {
     const query = this.searchQuery().trim().toLocaleLowerCase();
@@ -46,7 +49,6 @@ export class StudentsComponent {
       const searchableText = [
         student.registrationNumber,
         student.name,
-        student.email,
         student.gpa.toFixed(1),
         student.active ? 'active yes' : 'inactive no',
       ]
@@ -68,7 +70,6 @@ export class StudentsComponent {
       ],
     ],
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
     gpa: [3, [Validators.required, Validators.min(0), Validators.max(4)]],
     active: [true],
   });
@@ -103,7 +104,6 @@ export class StudentsComponent {
     this.studentForm.reset({
       registrationNumber: '',
       name: '',
-      email: '',
       gpa: 3,
       active: true,
     });
@@ -117,7 +117,6 @@ export class StudentsComponent {
     this.studentForm.reset({
       registrationNumber: student.registrationNumber,
       name: student.name,
-      email: student.email,
       gpa: student.gpa,
       active: student.active,
     });
@@ -175,7 +174,6 @@ export class StudentsComponent {
     const draft: StudentDraft = {
       registrationNumber: rawValue.registrationNumber.trim().toUpperCase(),
       name: rawValue.name.trim(),
-      email: rawValue.email.trim().toLocaleLowerCase(),
       gpa: Number(rawValue.gpa),
       active: rawValue.active,
     };
@@ -192,30 +190,27 @@ export class StudentsComponent {
       .find(
         (student) =>
           student.id !== selected?.id &&
-          (student.registrationNumber.toLocaleLowerCase() ===
-            draft.registrationNumber.toLocaleLowerCase() ||
-            student.email.toLocaleLowerCase() === draft.email.toLocaleLowerCase()),
+          student.registrationNumber.toLocaleLowerCase() ===
+            draft.registrationNumber.toLocaleLowerCase(),
       );
 
     if (conflictingStudent) {
-      this.dialogError.set(
-        conflictingStudent.registrationNumber.toLocaleLowerCase() ===
-          draft.registrationNumber.toLocaleLowerCase()
-          ? 'That registration number is already in use.'
-          : 'That email address is already in use.',
-      );
+      this.dialogError.set('That registration number is already in use.');
       return;
     }
 
-    if (mode === 'add') {
-      const created = this.data.addStudent(draft);
-      this.feedback.set(`${created.name} was added.`);
-    } else if (selected) {
-      this.data.updateStudent(selected.id, draft);
-      this.feedback.set(`${draft.name} was updated.`);
-    }
-
-    this.closeDialog();
+    const request =
+      mode === 'add' ? this.data.addStudent(draft) : this.data.updateStudent(selected!.id, draft);
+    this.operationPending.set(true);
+    request.pipe(finalize(() => this.operationPending.set(false))).subscribe({
+      next: (saved) => {
+        this.feedback.set(
+          mode === 'add' ? `${saved.name} was added.` : `${saved.name} was updated.`,
+        );
+        this.closeDialog();
+      },
+      error: (error: unknown) => this.dialogError.set(apiErrorMessage(error)),
+    });
   }
 
   protected confirmDelete(): void {
@@ -224,9 +219,18 @@ export class StudentsComponent {
       return;
     }
 
-    this.data.deleteStudent(student.id);
-    this.feedback.set(`${student.name} was deleted.`);
-    this.closeDialog();
+    this.dialogError.set('');
+    this.operationPending.set(true);
+    this.data
+      .deleteStudent(student.id)
+      .pipe(finalize(() => this.operationPending.set(false)))
+      .subscribe({
+        next: () => {
+          this.feedback.set(`${student.name} was deleted.`);
+          this.closeDialog();
+        },
+        error: (error: unknown) => this.dialogError.set(apiErrorMessage(error)),
+      });
   }
 
   protected onBackdropClick(event: MouseEvent): void {

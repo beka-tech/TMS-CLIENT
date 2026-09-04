@@ -37,8 +37,7 @@ export class GradeSubmissionComponent {
 
   // Reactive Form definition with initial model values and validators
   gradeForm = this.fb.group({
-    studentId: [101, [Validators.required, Validators.min(1)]],
-    courseId: [302, [Validators.required, Validators.min(1)]],
+    enrollmentId: [1, [Validators.required, Validators.min(1)]],
     score: [88, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
@@ -81,8 +80,7 @@ export class GradeSubmissionComponent {
     if (this.gradeForm.valid) {
       const rawValue = this.gradeForm.getRawValue();
       this.submitClick$.next({
-        studentId: Number(rawValue.studentId),
-        courseId: Number(rawValue.courseId),
+        enrollmentId: Number(rawValue.enrollmentId),
         score: Number(rawValue.score),
       });
     }

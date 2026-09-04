@@ -10,12 +10,12 @@ import { Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { TMS_HUB_EVENTS } from '../core/api-endpoints';
 import {
-  EnrollmentCreatedEvent,
+  CourseUpdateEvent,
   EnrollmentStatusEvent,
-  GradeSubmittedEvent,
-  TranscriptStatusEvent,
+  GradePostedEvent,
+  TranscriptReadyEvent,
 } from '../models/realtime.model';
-import { EnrollmentRecord, EnrollmentStatus, TranscriptStatus } from '../models/tms.model';
+import { EnrollmentStatus } from '../models/tms.model';
 import { AuthStateService } from './auth-state.service';
 
 export type RealtimeConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
@@ -31,16 +31,18 @@ export class LiveSyncService {
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryAttempt = 0;
   private shouldReconnect = false;
+  private transcriptStudentId: number | null = null;
+  private readonly watchedCourseCodes = new Set<string>();
 
-  private readonly enrollmentCreatedSubject = new Subject<EnrollmentCreatedEvent>();
+  private readonly transcriptReadySubject = new Subject<TranscriptReadyEvent>();
+  private readonly courseUpdateSubject = new Subject<CourseUpdateEvent>();
+  private readonly gradePostedSubject = new Subject<GradePostedEvent>();
   private readonly enrollmentStatusSubject = new Subject<EnrollmentStatusEvent>();
-  private readonly gradeSubmittedSubject = new Subject<GradeSubmittedEvent>();
-  private readonly transcriptStatusSubject = new Subject<TranscriptStatusEvent>();
 
-  readonly enrollmentCreated$ = this.enrollmentCreatedSubject.asObservable();
+  readonly transcriptReady$ = this.transcriptReadySubject.asObservable();
+  readonly courseUpdate$ = this.courseUpdateSubject.asObservable();
+  readonly gradePosted$ = this.gradePostedSubject.asObservable();
   readonly enrollmentStatusUpdated$ = this.enrollmentStatusSubject.asObservable();
-  readonly gradeSubmitted$ = this.gradeSubmittedSubject.asObservable();
-  readonly transcriptStatusUpdated$ = this.transcriptStatusSubject.asObservable();
   readonly events$ = this.enrollmentStatusUpdated$;
 
   readonly connectionState = signal<RealtimeConnectionState>('disconnected');
@@ -71,6 +73,21 @@ export class LiveSyncService {
     return this.ensureConnected();
   }
 
+  async connectForStudent(studentId: number): Promise<void> {
+    if (this.transcriptStudentId !== studentId) {
+      await this.stop();
+      this.transcriptStudentId = studentId;
+    }
+    return this.connect();
+  }
+
+  watchCourses(courseCodes: readonly string[]): void {
+    for (const code of courseCodes) this.watchedCourseCodes.add(code);
+    if (this.connection?.state === HubConnectionState.Connected) {
+      void this.joinCourseGroups();
+    }
+  }
+
   async stop(): Promise<void> {
     this.shouldReconnect = false;
     this.clearRetryTimer();
@@ -78,6 +95,7 @@ export class LiveSyncService {
     this.connection = null;
     this.startPromise = null;
     this.retryAttempt = 0;
+    this.transcriptStudentId = null;
     if (connection && connection.state !== HubConnectionState.Disconnected) {
       await connection.stop();
     }
@@ -91,22 +109,22 @@ export class LiveSyncService {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.on(TMS_HUB_EVENTS.enrollmentCreated, (enrollment: EnrollmentRecord) => {
-      this.enrollmentCreatedSubject.next({ enrollment });
+    connection.on(TMS_HUB_EVENTS.transcriptReady, (reportId: string, downloadUrl: string) => {
+      this.transcriptReadySubject.next({ reportId, downloadUrl });
     });
+    connection.on(TMS_HUB_EVENTS.courseUpdate, (courseCode: string, message: string) => {
+      this.courseUpdateSubject.next({ courseCode, message });
+    });
+    connection.on(
+      TMS_HUB_EVENTS.gradePosted,
+      (courseCode: string, studentId: number, grade: number) => {
+        this.gradePostedSubject.next({ courseCode, studentId, grade });
+      },
+    );
     connection.on(
       TMS_HUB_EVENTS.enrollmentStatusUpdated,
       (id: string, status: EnrollmentStatus) => {
         this.enrollmentStatusSubject.next({ id, status });
-      },
-    );
-    connection.on(TMS_HUB_EVENTS.gradeSubmitted, (enrollmentId: string, grade: number) => {
-      this.gradeSubmittedSubject.next({ enrollmentId, grade });
-    });
-    connection.on(
-      TMS_HUB_EVENTS.transcriptStatusUpdated,
-      (reportId: string, status: TranscriptStatus, downloadUrl?: string | null) => {
-        this.transcriptStatusSubject.next({ reportId, status, downloadUrl });
       },
     );
 
@@ -118,6 +136,7 @@ export class LiveSyncService {
       this.retryAttempt = 0;
       this.connectionState.set('connected');
       this.lastError.set(null);
+      void this.joinCourseGroups();
     });
     connection.onclose((error) => {
       this.connectionState.set('disconnected');
@@ -150,6 +169,7 @@ export class LiveSyncService {
         this.retryAttempt = 0;
         this.connectionState.set('connected');
         this.lastError.set(null);
+        void this.joinCourseGroups();
       })
       .catch((error: unknown) => {
         this.connectionState.set('disconnected');
@@ -193,8 +213,26 @@ export class LiveSyncService {
   }
 
   private hubUrl(): string {
-    if (/^https?:\/\//i.test(environment.hubUrl)) return environment.hubUrl;
-    return new URL(environment.hubUrl, this.document.location?.origin ?? 'http://localhost').href;
+    const url = /^https?:\/\//i.test(environment.hubUrl)
+      ? new URL(environment.hubUrl)
+      : new URL(environment.hubUrl, this.document.location?.origin ?? 'http://localhost');
+    if (this.transcriptStudentId !== null) {
+      url.searchParams.set('studentId', String(this.transcriptStudentId));
+    }
+    return url.href;
+  }
+
+  private async joinCourseGroups(): Promise<void> {
+    if (this.connection?.state !== HubConnectionState.Connected) return;
+    for (const courseCode of this.watchedCourseCodes) {
+      try {
+        await this.connection.invoke('JoinCourseGroup', courseCode);
+      } catch (error: unknown) {
+        this.lastError.set(
+          error instanceof Error ? error.message : `Could not watch course ${courseCode}.`,
+        );
+      }
+    }
   }
 }
 

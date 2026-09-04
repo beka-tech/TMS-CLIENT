@@ -9,6 +9,13 @@ interface CourseApiModel extends Partial<TrainingCourse> {
   code: string;
   title: string;
   maxCapacity?: number;
+  enrollmentCount?: number;
+}
+
+interface CourseWriteModel {
+  code: string;
+  title: string;
+  maxCapacity: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,7 +25,7 @@ export class CourseService {
   getAll(page = 1, pageSize = 50): Observable<TrainingCourse[]> {
     const query: ApiQuery = { page, pageSize };
     return this.api
-      .getCollection<CourseApiModel>(API_ENDPOINTS.courses, { params: query })
+      .getCollection<CourseApiModel>(API_ENDPOINTS.courseList, { params: query })
       .pipe(map((courses) => courses.map((course) => this.normalize(course))));
   }
 
@@ -29,18 +36,17 @@ export class CourseService {
   }
 
   create(course: CourseDraft): Observable<TrainingCourse> {
-    return this.api.post<TrainingCourse, CourseDraft>(API_ENDPOINTS.courses, course);
+    return this.api
+      .post<CourseApiModel, CourseWriteModel>(API_ENDPOINTS.courses, {
+        code: course.code,
+        title: course.title,
+        maxCapacity: course.capacity,
+      })
+      .pipe(map((created) => this.normalize(created)));
   }
 
-  update(id: number, course: CourseDraft): Observable<TrainingCourse> {
-    return this.api.put<TrainingCourse, CourseDraft>(
-      resourceUrl(API_ENDPOINTS.courses, id),
-      course,
-    );
-  }
-
-  delete(id: number): Observable<void> {
-    return this.api.delete<void>(resourceUrl(API_ENDPOINTS.courses, id));
+  update(id: number, title: string): Observable<void> {
+    return this.api.put<void, { title: string }>(resourceUrl(API_ENDPOINTS.courses, id), { title });
   }
 
   private normalize(course: CourseApiModel): TrainingCourse {
@@ -48,9 +54,8 @@ export class CourseService {
       id: course.id,
       code: course.code,
       title: course.title,
-      description: course.description ?? 'Course details will be added soon.',
       capacity: course.capacity ?? course.maxCapacity ?? 0,
-      instructor: course.instructor ?? 'To be assigned',
+      enrollmentCount: course.enrollmentCount ?? 0,
       assessments: course.assessments ?? [],
     };
   }

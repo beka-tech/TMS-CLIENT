@@ -7,7 +7,7 @@
     <div>
       <p class="page-kicker">Learning catalogue</p>
       <h1>Courses</h1>
-      <p class="page-subtitle">Manage course capacity, instructors, and training content.</p>
+      <p class="page-subtitle">Manage the course catalogue and enrollment capacity.</p>
     </div>
     <button class="btn btn-primary" type="button" (click)="openAddDialog()">
       <span aria-hidden="true">+</span>
@@ -52,7 +52,7 @@
             id="course-search"
             type="search"
             autocomplete="off"
-            placeholder="Code, title, or instructor"
+            placeholder="Code or title"
             [value]="searchQuery()"
             (input)="updateSearch($event)"
           />
@@ -87,7 +87,7 @@
               <td>
                 <div class="course-name">
                   <a [routerLink]="['/courses', row.course.id]">{{ row.course.title }}</a>
-                  <span>{{ row.course.instructor }}</span>
+                  <span>{{ row.students }} enrolled</span>
                 </div>
               </td>
               <td>{{ row.students }}</td>
@@ -179,13 +179,13 @@
               type="text"
               formControlName="code"
               autocomplete="off"
-              placeholder="CS-401"
+              placeholder="CSE-401"
               [attr.aria-invalid]="
                 courseForm.controls.code.touched && courseForm.controls.code.invalid
               "
             />
             @if (courseForm.controls.code.touched && courseForm.controls.code.invalid) {
-              <small class="field-error">Use a code such as CS-401.</small>
+              <small class="field-error">Use a code such as CSE-401.</small>
             }
           </div>
 
@@ -196,13 +196,13 @@
               type="number"
               formControlName="capacity"
               min="1"
-              max="500"
+              max="200"
               [attr.aria-invalid]="
                 courseForm.controls.capacity.touched && courseForm.controls.capacity.invalid
               "
             />
             @if (courseForm.controls.capacity.touched && courseForm.controls.capacity.invalid) {
-              <small class="field-error">Enter a capacity from 1 to 500.</small>
+              <small class="field-error">Enter a capacity from 1 to 200.</small>
             }
           </div>
 
@@ -222,50 +222,20 @@
               <small class="field-error">Enter a course title.</small>
             }
           </div>
-
-          <div class="field full">
-            <label for="course-instructor">Instructor</label>
-            <input
-              id="course-instructor"
-              type="text"
-              formControlName="instructor"
-              autocomplete="name"
-              placeholder="Instructor name"
-              [attr.aria-invalid]="
-                courseForm.controls.instructor.touched && courseForm.controls.instructor.invalid
-              "
-            />
-            @if (courseForm.controls.instructor.touched && courseForm.controls.instructor.invalid) {
-              <small class="field-error">Enter the instructor's name.</small>
-            }
-          </div>
-
-          <div class="field full">
-            <label for="course-description">Description</label>
-            <textarea
-              id="course-description"
-              formControlName="description"
-              rows="4"
-              placeholder="What will students learn?"
-              [attr.aria-invalid]="
-                courseForm.controls.description.touched && courseForm.controls.description.invalid
-              "
-            ></textarea>
-            <div class="field-hint">
-              @if (
-                courseForm.controls.description.touched && courseForm.controls.description.invalid
-              ) {
-                <small class="field-error">Enter 10–240 characters.</small>
-              } @else {
-                <small>{{ courseForm.controls.description.value.length }} / 240</small>
-              }
-            </div>
-          </div>
         </div>
 
         <footer class="dialog-actions">
-          <button class="btn btn-secondary" type="button" (click)="closeAddDialog()">Cancel</button>
-          <button class="btn btn-primary" type="submit">Add course</button>
+          <button
+            class="btn btn-secondary"
+            type="button"
+            [disabled]="operationPending()"
+            (click)="closeAddDialog()"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" type="submit" [disabled]="operationPending()">
+            {{ operationPending() ? 'Adding...' : 'Add course' }}
+          </button>
         </footer>
       </form>
     </section>
